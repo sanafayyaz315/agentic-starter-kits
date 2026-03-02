@@ -1,13 +1,37 @@
+"""
+Clear conversation history from PostgreSQL.
+Set mode below: delete a single thread or wipe all threads.
+"""
 from langgraph.checkpoint.postgres import PostgresSaver
 from langgraph_react_with_database_memory_base.utils import get_database_uri
 
-thread_id = "PLACEHOLDER FOR YOUR THREAD ID"
+# ============================================
+# SET YOUR THREAD ID HERE
+# Leave empty to delete ALL threads
+# ============================================
+thread_id = "YOUR_THREAD_ID"
 
-# Get database URI from environment variables
 DB_URI = get_database_uri()
 
-# Delete the thread from the database
-with PostgresSaver.from_conn_string(DB_URI) as saver:
-    saver.delete_thread(thread_id)
+if thread_id:
+    # Delete a single thread
+    with PostgresSaver.from_conn_string(DB_URI) as saver:
+        saver.delete_thread(thread_id)
+    print(f"Deleted thread: {thread_id}")
 
-print(f"Successfully deleted conversation with id: {thread_id}")
+else:
+    # Delete all threads
+    with PostgresSaver.from_conn_string(DB_URI) as saver:
+        count = 0
+        seen = set()
+        for cp_tuple in saver.list(None):
+            tid = cp_tuple.config["configurable"]["thread_id"]
+            if tid not in seen:
+                seen.add(tid)
+
+        for tid in seen:
+            saver.delete_thread(tid)
+            count += 1
+            print(f"  Deleted: {tid}")
+
+    print(f"\nDeleted {count} thread(s).")
