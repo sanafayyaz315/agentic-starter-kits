@@ -11,3 +11,4 @@ openai>=2.21.0
 python-dotenv>=1.0.0
 pytest>=8.3.3
 requests>=2.31.0
+ipykernel

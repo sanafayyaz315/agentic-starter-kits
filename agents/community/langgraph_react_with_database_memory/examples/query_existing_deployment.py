@@ -1,54 +1,62 @@
 """
-Query a deployed agent instance via HTTP.
-Useful for testing OpenShift/Kubernetes deployments.
+Query PostgreSQL checkpoint database to inspect stored conversation messages.
+Set thread_id below and run the script.
 """
-import requests
-import uuid
-from examples._interactive_chat import InteractiveChat
 
-# Update this with your deployed route URL
-DEPLOYMENT_URL = "https://your-route-url.com/chat"
-thread_id = "PLACEHOLDER FOR YOUR THREAD ID"
-stream = False  # Set to True if your deployment supports streaming
+from langgraph.checkpoint.postgres import PostgresSaver
+from langgraph_react_with_database_memory_base.utils import get_database_uri
+from langchain_core.messages import AIMessage
 
-if thread_id == "PLACEHOLDER FOR YOUR THREAD ID":
-    thread_id = str(uuid.uuid4())
+# ============================================
+# SET YOUR THREAD ID HERE
+# Leave empty to list all available threads
+# ============================================
+thread_id = "YOUR_THREAD_ID"
 
-header = f" thread_id: {thread_id} "
-print()
-print("\u2554" + len(header) * "\u2550" + "\u2557")
-print("\u2551" + header + "\u2551")
-print("\u255a" + len(header) * "\u2550" + "\u255d")
-print()
+DB_URI = get_database_uri()
 
+if not thread_id:
+    # List all threads so you can pick one
+    print("\nNo thread_id set — listing all threads:\n")
+    with PostgresSaver.from_conn_string(DB_URI) as saver:
+        seen = set()
+        for cp_tuple in saver.list(None, limit=50):
+            tid = cp_tuple.config["configurable"]["thread_id"]
+            if tid not in seen:
+                seen.add(tid)
+                msgs = cp_tuple.checkpoint.get("channel_values", {}).get("messages", [])
+                preview = ""
+                for m in msgs:
+                    if hasattr(m, "content") and m.content:
+                        preview = m.content[:60]
+                        break
+                print(f"  {tid}  ({len(msgs)} msgs)  {preview}")
 
-def ai_service_invoke(payload):
-    """
-    Send request to deployed agent endpoint.
+    print(f"\n{len(seen)} thread(s) found.")
+    print('Set thread_id = "..." in the script and re-run to see messages.')
 
-    Args:
-        payload: Dictionary with "messages" key containing message list
+else:
+    # Show all messages for the given thread
+    config = {"configurable": {"thread_id": thread_id}}
 
-    Returns:
-        Response from the deployed agent
-    """
-    payload["thread_id"] = thread_id
+    with PostgresSaver.from_conn_string(DB_URI) as saver:
+        cp_tuple = saver.get_tuple(config)
 
-    try:
-        response = requests.post(
-            DEPLOYMENT_URL,
-            json=payload,
-            headers={"Content-Type": "application/json"},
-            timeout=30
-        )
-        response.raise_for_status()
-        return response.json()
-    except requests.exceptions.RequestException as e:
-        print(f"Error querying deployment: {e}")
-        return {"choices": [{"message": {"role": "assistant", "content": f"Error: {e}"}}]}
+    if not cp_tuple or not cp_tuple.checkpoint:
+        print(f"No checkpoint found for thread '{thread_id}'")
+    else:
+        messages = cp_tuple.checkpoint.get("channel_values", {}).get("messages", [])
 
+        print(f"\nThread: {thread_id}")
+        print(f"Total messages: {len(messages)}")
+        print("=" * 70)
 
-# Note: Streaming not yet implemented for HTTP queries
-# Use stream=False for now
-chat = InteractiveChat(ai_service_invoke, stream=False)
-chat.run()
+        for i, msg in enumerate(messages):
+            role = type(msg).__name__.replace("Message", "").lower()
+            content = msg.content if msg.content else ""
+            if isinstance(msg, AIMessage) and msg.tool_calls:
+                calls = ", ".join(tc["name"] for tc in msg.tool_calls)
+                content = content or f"[tool_calls: {calls}]"
+            print(f"[{i + 1:3d}] {role:9s} | {content}")
+
+        print("=" * 70)

@@ -179,12 +179,13 @@ def ai_stream_service(
                     if msg_obj.type == "system":
                         continue
                 elif chunk_type == "updates":
-                    if agent_data := data.get("agent"):
-                        msg_obj = agent_data["messages"][0]
+                    # create_agent uses node name "model" (not "agent")
+                    if model_data := data.get("model"):
+                        msg_obj = model_data["messages"][0]
                     elif tool_data := data.get("tools"):
                         msg_obj = tool_data["messages"][0]
                     else:
-                        # Skip updates without messages (e.g., pre_model_hook)
+                        # Skip updates without messages (e.g., middleware)
                         continue
                 else:
                     continue
