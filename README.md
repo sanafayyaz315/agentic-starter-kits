@@ -15,6 +15,7 @@ Choose an agent and follow its README for setup and deployment:
 - **[LlamaIndex WebSearch](./agents/base/llamaindex_websearch_agent/README.md)** – Agent built on LlamaIndex that uses a web search tool to query the internet and use the results in its answers.
 - **[OpenAI Responses](./agents/base/openai_responses_agent/README.md)** – Minimal agent with no framework: only the OpenAI Python client and an Action/Observation loop with tools. Use with OpenAI or any compatible API.
 - **[LangGraph Agentic RAG](./agents/community/langgraph_agentic_rag/README.md)** – RAG agent that indexes documents in a vector store (Milvus) and retrieves relevant chunks to augment the LLM’s answers with your own data.
+- **[LangGraph ReAct with Database Memory](./agents/community/langgraph_react_with_database_memory/README.md)** – ReAct agent with PostgreSQL-backed conversation memory. Full chat history is persisted in the database while a FIFO sliding window keeps only the last N messages in the LLM context. Built with LangGraph and `create_agent` middleware.
 
 ## Deployment Options
 Agents in this repository can support two deployment modes:
@@ -41,7 +42,8 @@ Agentic-Starter-Kits/
 │   │   └── llamaindex_websearch_agent/  # LlamaIndex web search agent
 │   │   └── openai_responses_agent/      # OpenAI Responses API (no framework)
 │   └── community/
-│       └── langgraph_agentic_rag/       # RAG agent with Milvus vector store
+│       ├── langgraph_agentic_rag/       # RAG agent with Milvus vector store
+│       └── langgraph_react_with_database_memory/  # ReAct agent with PostgreSQL memory (FIFO)
 ├── run_llama_server.yaml                # Llama Stack server configuration
 ├── utils.py                             # Shared utilities
 └── README.md                            # This file
