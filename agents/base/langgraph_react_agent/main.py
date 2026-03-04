@@ -7,11 +7,15 @@ from fastapi import FastAPI, HTTPException
 from fastapi.responses import StreamingResponse
 from langchain_core.messages import HumanMessage, AIMessage, ToolMessage
 from pydantic import BaseModel
+import mlflow
+import logging
 
 logger = logging.getLogger(__name__)
 
 from langgraph_react_agent_base.agent import get_graph_closure
+from langgraph_react_agent_base.tracing import enable_tracing
 
+logger = logging.getLogger(__name__)
 
 # Request/Response models
 class ChatRequest(BaseModel):
@@ -39,6 +43,9 @@ async def lifespan(app: FastAPI):
     get_graph_closure, and sets the global agent_graph for the /chat endpoint.
     """
     global agent_graph
+
+    # Enable tracing (MLflow) if configured
+    enable_tracing()
 
     # Get environment variables
     base_url = getenv("BASE_URL")

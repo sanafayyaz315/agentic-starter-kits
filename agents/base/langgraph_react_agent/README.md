@@ -43,6 +43,25 @@ MODEL_ID=ollama/llama3.2:3b
 API_KEY=not-needed
 CONTAINER_IMAGE=not-needed
 ```
+##### Tracing
+
+```
+MLFLOW_TRACKING_URI="http://localhost:5000"
+MLFLOW_EXPERIMENT_NAME="Langgraph Local Experiment"
+MLFLOW_HTTP_REQUEST_TIMEOUT=2 
+MLFLOW_HTTP_REQUEST_MAX_RETRIES=0
+```
+Install mlflow (>=3.10.0) and spin up mlflow server
+
+```
+pip install mlflow
+mlflow server --port 5000
+```
+**Note**
+
+- Tracing is optional; if you do not set MLFLOW_TRACKING_URI, the application will run without MLflow logging.
+
+- If MLFLOW_TRACKING_URI is set, the application will attempt to connect to the MLflow server at startup. The MLflow server must be running before starting the application, otherwise startup will fail.
 
 #### OpenShift Cluster
 
