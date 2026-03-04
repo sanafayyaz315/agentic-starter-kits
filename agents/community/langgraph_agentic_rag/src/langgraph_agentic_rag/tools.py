@@ -32,6 +32,7 @@ def get_retriever_components(
     # Get configuration from environment if not provided
     if not base_url:
         base_url = getenv("BASE_URL")
+    vector_store_name = getenv("VECTOR_STORE_NAME")
 
     # Initialize LlamaStack client
     client = LlamaStackClient(
@@ -41,12 +42,11 @@ def get_retriever_components(
 
     # Get the vector store ID
     vector_store_list = client.vector_stores.list()
-    if len(vector_store_list.data) == 0:
-        raise RuntimeError(
-            "No vector store found. Please run load_documents.py first to create and populate the vector store."
-        )
 
-    vector_store_id = vector_store_list.data[0].id
+    for vs in vector_store_list.data:
+        if vs.name == vector_store_name:
+            print(f"Your Vector Store: {vs.id} ({vs.name})")
+            vector_store_id = vs.id
 
     # Cache the components
     _client_cache = client
@@ -93,7 +93,7 @@ def retriever_tool(query: str) -> str:
         vector_store_id=vector_store_id,
         query=query,  # Pass the text query directly
         params={
-            "max_chunks": 2  # Retrieve only the most relevant document (max_chunks not top_k or K)
+            "max_chunks": 5  # Retrieve only the most relevant document (max_chunks not top_k or K)
         },
     )
 

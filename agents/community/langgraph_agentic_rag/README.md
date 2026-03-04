@@ -223,7 +223,7 @@ oc get route langgraph-agentic-rag -o jsonpath='{.spec.host}'
 Send a test request:
 
 ```bash
-curl -X POST https://<YOUR_ROUTE_URL>/chat \
+curl -X POST https://langgraph-agentic-rag-tguzik-agents.apps.rosa.ai-eng-gpu.socc.p3.openshiftapps.com/chat \
   -H "Content-Type: application/json" \
   -d '{"message": "What is LangChain?"}'
 ```
