@@ -5,10 +5,14 @@
 </div>
 
 ---
+
 ## What this agent does
-Minimal agent with no framework: only the OpenAI Python client and an Action/Observation loop with tools. Use with OpenAI or any compatible API.
+
+Minimal agent with no framework: only the OpenAI Python client and an Action/Observation loop with tools. Use with
+OpenAI or any compatible API.
 
 ---
+
 ### Preconditions
 
 - Copy/paste the `.env` file and set values for your environment
@@ -32,7 +36,9 @@ API_KEY=not-needed
 CONTAINER_IMAGE=not-needed
 ```
 
-> **Local setup (Ollama):** Port and model name can differ depending on your setup (e.g. Llama Stack on port 8321 vs Ollama on 11434, or a different model ID). Check your running services and `run_llama_server.yaml` (if using Llama Stack) and set `BASE_URL` and `MODEL_ID` accordingly.
+> **Local setup (Ollama):** Port and model name can differ depending on your setup (e.g. Llama Stack on port 8321 vs
+> Ollama on 11434, or a different model ID). Check your running services and `run_llama_server.yaml` (if using Llama
+> Stack) and set `BASE_URL` and `MODEL_ID` accordingly.
 
 Or for **OpenAI API** directly:
 
@@ -59,15 +65,16 @@ CONTAINER_IMAGE=quay.io/your-username/openai-responses-agent:latest
 - `API_KEY` – contact your cluster administrator
 - `BASE_URL` – should end with `/v1`
 - `MODEL_ID` – contact your cluster administrator
-- `CONTAINER_IMAGE` – full image path where the agent container will be pushed and pulled from. The image is built locally, pushed to this registry, and then deployed to OpenShift.
+- `CONTAINER_IMAGE` – full image path where the agent container will be pushed and pulled from. The image is built
+  locally, pushed to this registry, and then deployed to OpenShift.
 
   Format: `<registry>/<namespace>/<image-name>:<tag>`
 
   Examples:
 
-  - Quay.io: `quay.io/your-username/openai-responses-agent:latest`
-  - Docker Hub: `docker.io/your-username/openai-responses-agent:latest`
-  - GHCR: `ghcr.io/your-org/openai-responses-agent:latest`
+    - Quay.io: `quay.io/your-username/openai-responses-agent:latest`
+    - Docker Hub: `docker.io/your-username/openai-responses-agent:latest`
+    - GHCR: `ghcr.io/your-org/openai-responses-agent:latest`
 
 Go to agent dir:
 
