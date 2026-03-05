@@ -7,15 +7,11 @@ from fastapi import FastAPI, HTTPException
 from fastapi.responses import StreamingResponse
 from langchain_core.messages import HumanMessage, AIMessage, ToolMessage
 from pydantic import BaseModel
-import mlflow
-import logging
 
 logger = logging.getLogger(__name__)
 
 from langgraph_react_agent_base.agent import get_graph_closure
 from langgraph_react_agent_base.tracing import enable_tracing
-
-logger = logging.getLogger(__name__)
 
 # Request/Response models
 class ChatRequest(BaseModel):
