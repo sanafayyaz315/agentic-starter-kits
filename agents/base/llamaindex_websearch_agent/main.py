@@ -9,8 +9,9 @@ from llama_index_workflow_agent_base.agent import get_workflow_closure
 from llama_index_workflow_agent_base.workflow import ToolCallEvent, InputEvent
 from pydantic import BaseModel
 
-logger = logging.getLogger(__name__)
+from llama_index_workflow_agent_base.tracing import enable_tracing
 
+logger = logging.getLogger(__name__)
 
 # Request/Response models
 class ChatRequest(BaseModel):
@@ -38,6 +39,9 @@ async def lifespan(app: FastAPI):
     get_workflow_closure, and sets the global get_agent for the /chat endpoint.
     """
     global get_agent
+
+    # Enable tracing (MLflow) if configured
+    enable_tracing()
 
     # Get environment variables
     base_url = getenv("BASE_URL")

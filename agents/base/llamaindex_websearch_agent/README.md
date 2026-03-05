@@ -42,6 +42,20 @@ MODEL_ID=ollama/llama3.2:3b
 API_KEY=not-needed
 CONTAINER_IMAGE=not-needed
 ```
+##### Tracing
+
+```
+MLFLOW_TRACKING_URI="http://localhost:5000"
+MLFLOW_EXPERIMENT_NAME="Langgraph Local Experiment"
+MLFLOW_HTTP_REQUEST_TIMEOUT=2 
+MLFLOW_HTTP_REQUEST_MAX_RETRIES=0
+```
+Install mlflow (>=3.10.0) and spin up mlflow server
+
+```
+pip install mlflow
+mlflow server --port 5000
+```
 
 #### OpenShift Cluster
 
@@ -68,6 +82,44 @@ CONTAINER_IMAGE=quay.io/your-username/llamaindex-websearch-agent:latest
     - Quay.io: `quay.io/your-username/llamaindex-websearch-agent:latest`
     - Docker Hub: `docker.io/your-username/llamaindex-websearch-agent:latest`
     - GHCR: `ghcr.io/your-org/llamaindex-websearch-agent:latest`
+  - Quay.io: `quay.io/your-username/llamaindex-websearch-agent:latest`
+  - Docker Hub: `docker.io/your-username/llamaindex-websearch-agent:latest`
+  - GHCR: `ghcr.io/your-org/llamaindex-websearch-agent:latest`
+
+##### Tracing
+
+To enable tracing and logging with MLflow on your OpenShift cluster, add the following environment variables to your `.env` file:
+
+```
+MLFLOW_TRACKING_URI="https://<openshift-dashboard-url>/mlflow"
+MLFLOW_TRACKING_TOKEN="<your-openshift-token>"
+MLFLOW_EXPERIMENT_NAME="<your-experiment-name>"
+MLFLOW_TRACKING_INSECURE_TLS="true"
+MLFLOW_WORKSPACE="default"
+```
+
+Install mlflow:
+
+  For RHOAI 3.2 or 3.3:
+  ```
+  pip install "git+https://github.com/red-hat-data-services/mlflow@rhoai-3.3"
+  ```
+
+**Notes:**
+- `MLFLOW_TRACKING_URI` - Replace `<openshift-dashboard-url>` with your OpenShift cluster's data science gateway URL
+- `MLFLOW_TRACKING_TOKEN` - Your openshift authentication token. It can be obtained from the openshift console.
+- `MLFLOW_EXPERIMENT_NAME` - A descriptive name for your experiment (e.g., "Langgraph Cluster Demo")
+- `MLFLOW_TRACKING_INSECURE_TLS` - Set to `"true"` if your OpenShift cluster does not use trusted certificates
+- `MLFLOW_WORKSPACE` - Project name
+
+- Tracing is optional; if you do not set MLFLOW_TRACKING_URI, the application will run without MLflow logging.
+
+- If MLFLOW_TRACKING_URI is set, the application will attempt to connect to the MLflow server at startup. The MLflow server must be running before starting the application, otherwise startup will fail.
+
+Go to agent dir
+```bash
+cd agents/base/llamaindex_websearch_agent
+```
 
 Create and activate a virtual environment (Python 3.12) in this directory using [uv](https://docs.astral.sh/uv/):
 
