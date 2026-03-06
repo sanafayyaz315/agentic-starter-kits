@@ -45,6 +45,10 @@ spec:
           value: "${MODEL_ID}"
         - name: EMBEDDING_MODEL
           value: "${EMBEDDING_MODEL}"
+        - name: VECTOR_STORE_NAME
+          value: "${VECTOR_STORE_NAME}"
+        - name: VECTOR_STORE_ID
+          value: "${VECTOR_STORE_ID}"
         - name: VECTOR_STORE_PATH
           value: "/app/data/vector_store"
         volumeMounts:

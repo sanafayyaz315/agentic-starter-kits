@@ -1,9 +1,8 @@
-import os
 from contextlib import asynccontextmanager
+from os import getenv
 
 from fastapi import FastAPI, HTTPException
 from openai_responses_agent_base.agent import get_agent_closure
-from openai_responses_agent_base.utils import get_env_var
 from pydantic import BaseModel
 
 
@@ -34,8 +33,8 @@ async def lifespan(app: FastAPI):
     """
     global get_agent
 
-    base_url = get_env_var("BASE_URL")
-    model_id = get_env_var("MODEL_ID")
+    base_url = getenv("BASE_URL")
+    model_id = getenv("MODEL_ID")
 
     # Ensure base_url ends with /v1 if provided
     if base_url and not base_url.endswith("/v1"):
@@ -91,5 +90,5 @@ async def health():
 if __name__ == "__main__":
     import uvicorn
 
-    port = int(os.getenv("PORT", 8000))
+    port = int(getenv("PORT", 8000))
     uvicorn.run(app, host="0.0.0.0", port=port)
