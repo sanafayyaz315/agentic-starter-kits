@@ -51,12 +51,6 @@ MLFLOW_EXPERIMENT_NAME="Langgraph Local Experiment"
 MLFLOW_HTTP_REQUEST_TIMEOUT=2 
 MLFLOW_HTTP_REQUEST_MAX_RETRIES=0
 ```
-Install mlflow (>=3.10.0) and spin up mlflow server
-
-```
-pip install mlflow
-mlflow server --port 5000
-```
 
 #### OpenShift Cluster
 
@@ -92,16 +86,9 @@ To enable tracing and logging with MLflow on your OpenShift cluster, add the fol
 MLFLOW_TRACKING_URI="https://<openshift-dashboard-url>/mlflow"
 MLFLOW_TRACKING_TOKEN="<your-openshift-token>"
 MLFLOW_EXPERIMENT_NAME="<your-experiment-name>"
-MLFLOW_TRACKING_INSECURE_TLS="true"
-MLFLOW_WORKSPACE="default"
+MLFLOW_TRACKING_INSECURE_TLS="true" # If the OpenShift cluster does not use trusted certificates
+MLFLOW_WORKSPACE="<your project name>"
 ```
-
-Install mlflow:
-
-  For RHOAI 3.2 or 3.3:
-  ```
-  pip install "git+https://github.com/red-hat-data-services/mlflow@rhoai-3.3"
-  ```
 
 **Notes:**
 - `MLFLOW_TRACKING_URI` - Replace `<openshift-dashboard-url>` with your OpenShift cluster's data science gateway URL
@@ -154,6 +141,11 @@ uv pip install -e .
 uv pip install ollama
 ```
 
+Install mlflow (>=3.10.0) - *Optional: Only required if tracing is enabled*
+```bash
+uv pip install mlflow
+```
+
 Install app from Ollama site or via Brew
 
 ```bash
@@ -176,6 +168,12 @@ ollama serve
 
 > **Keep this terminal open!**\
 > Ollama needs to keep running.
+
+Start MLflow Server
+```bash
+mlflow server --port 5000
+```
+>**Keep this terminal open** - the server needs to keep running.
 
 Start LlamaStack Server
 
@@ -204,6 +202,11 @@ Login ex. Docker
 
 ```bash
 docker login -u='login' -p='password' quay.io
+```
+
+Install MLflow for RHOAI 3.2 or 3.3 - *Optional: Only required if tracing is enabled*
+```bash
+uv pip install "git+https://github.com/red-hat-data-services/mlflow@rhoai-3.3"
 ```
 
 Make deploy file executable

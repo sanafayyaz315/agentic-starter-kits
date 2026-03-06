@@ -1,15 +1,10 @@
 import os
-import logging
 import time
 import requests
 from fastapi import HTTPException
-from dotenv import load_dotenv
+from typing import Optional
 
 import logging
-
-load_dotenv()
-
-mlflow_tracking_uri = os.getenv("MLFLOW_TRACKING_URI")
 
 logger = logging.getLogger("tracing")
 logger.setLevel(logging.INFO)
@@ -21,7 +16,7 @@ if not logger.handlers:
     handler.setFormatter(formatter)
     logger.addHandler(handler)
 
-def check_mlflow_health(mlflow_tracking_uri="http://localhost:5000", max_wait_time=60, retry_interval=1):
+def check_mlflow_health(mlflow_tracking_uri: str, max_wait_time: int = 60, retry_interval: int = 1) -> None:
     """
     Check MLflow health by trying the /health endpoint. If it fails, retry for a certain duration before giving up.
     args:   
@@ -57,7 +52,7 @@ def check_mlflow_health(mlflow_tracking_uri="http://localhost:5000", max_wait_ti
         logger.warning(f"Retrying in {retry_interval} seconds...")
         time.sleep(retry_interval)
 
-def enable_tracing():
+def enable_tracing() -> None:
     """
     Enable MLflow tracing if MLFLOW_TRACKING_URI is set.
 
@@ -68,7 +63,7 @@ def enable_tracing():
        - If the server is reachable: tracing is enabled.
        - If the server is unreachable: raise RuntimeError and crash the application.
     """
-    tracking_uri = os.getenv("MLFLOW_TRACKING_URI")
+    tracking_uri: Optional[str] = os.getenv("MLFLOW_TRACKING_URI")
     if not tracking_uri:
         logger.info("[Tracing] MLFLOW_TRACKING_URI not set. Tracing is disabled.")
         return
@@ -89,7 +84,7 @@ def enable_tracing():
 
     # Server is reachable → enable tracing
     mlflow.set_tracking_uri(tracking_uri)
-    experiment_name = os.getenv("MLFLOW_EXPERIMENT_NAME", "default-agent-experiment")
+    experiment_name: str = os.getenv("MLFLOW_EXPERIMENT_NAME", "default-agent-experiment")
     mlflow.set_experiment(experiment_name)
     mlflow.config.enable_async_logging()
 
