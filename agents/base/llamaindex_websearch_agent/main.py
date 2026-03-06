@@ -1,12 +1,10 @@
 import json
-import os
 from contextlib import asynccontextmanager
 from os import getenv
 
 from fastapi import FastAPI, HTTPException
-from pydantic import BaseModel
-
 from llama_index_workflow_agent_base.agent import get_workflow_closure
+from pydantic import BaseModel
 
 
 # Request/Response models
@@ -200,5 +198,5 @@ async def health():
 if __name__ == "__main__":
     import uvicorn
 
-    port = int(os.getenv("PORT", 8000))
+    port = int(getenv("PORT", 8000))
     uvicorn.run(app, host="0.0.0.0", port=port)

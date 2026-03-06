@@ -280,7 +280,7 @@ def test_get_retriever_components_no_vector_store(mock_get_env, mock_client_clas
 
 def test_get_retriever_components():
     load_dotenv(verbose=True)
-    base_url = os.getenv("BASE_URL")
+    base_url = getenv("BASE_URL")
     get_retriever_components(base_url)
 
 
