@@ -9,6 +9,7 @@ from llama_index_workflow_agent_base.agent import get_workflow_closure
 from llama_index_workflow_agent_base.workflow import ToolCallEvent, InputEvent
 from pydantic import BaseModel
 
+from llama_index_workflow_agent_base.agent import get_workflow_closure
 from llama_index_workflow_agent_base.tracing import enable_tracing
 
 logger = logging.getLogger(__name__)
