@@ -1,4 +1,4 @@
-import os
+from os import getenv
 import time
 import requests
 from fastapi import HTTPException
@@ -84,7 +84,7 @@ def enable_tracing() -> None:
 
     # Server is reachable → enable tracing
     mlflow.set_tracking_uri(tracking_uri)
-    experiment_name: str = os.getenv("MLFLOW_EXPERIMENT_NAME", "default-agent-experiment")
+    experiment_name: str = getenv("MLFLOW_EXPERIMENT_NAME", "default-agent-experiment")
     mlflow.set_experiment(experiment_name)
     mlflow.config.enable_async_logging()
 
