@@ -185,9 +185,9 @@ oc get route langgraph-react-agent -o jsonpath='{.spec.host}'
 Send a test request:
 
 ```bash
-curl -X POST https://<YOUR_ROUTE_URL>/chat \
+curl -X POST https://crewai-websearch-agent-tguzik-agents.apps.rosa.ai-eng-gpu.socc.p3.openshiftapps.com/chat \
   -H "Content-Type: application/json" \
-  -d '{"message": "What is the best company? Answer with the first correct answer."}'
+  -d '{"message": "What is the best cluster hosting service?"}'
 ```
 
 ## Agent-Specific Documentation

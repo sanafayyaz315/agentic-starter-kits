@@ -1,0 +1,9 @@
+generate_response_task:
+  description: >
+    Respond to user prompt: {user_prompt}.
+    If the prompt is a greeting or casual message, respond directly without using any tools.
+    Only use the Web Search tool if the user is asking a factual question that requires
+    looking up external information. Never call a tool more than once for the same question.
+  expected_output: >
+    A concise and polite response to the user prompt: {user_prompt}
+  agent: ai_assistant
