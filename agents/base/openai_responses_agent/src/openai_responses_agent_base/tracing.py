@@ -2,7 +2,7 @@ from os import getenv
 import time
 import requests
 from fastapi import HTTPException
-from typing import Optional
+from typing import Optional, Callable
 
 import logging
 
@@ -52,6 +52,27 @@ def check_mlflow_health(mlflow_tracking_uri: str, max_wait_time: int = 60, retry
         logger.warning(f"Retrying in {retry_interval} seconds...")
         time.sleep(retry_interval)
 
+# Wrapping functions for tools and agents with MLflow tracing
+def wrap_func_with_mlflow_trace(func: Callable, type:str) -> Callable:
+        """
+        Wrap a function with MLflow.trace(span_type=SpanType.<type>) if MLflow is enabled.
+
+        Returns the original function if MLflow is not installed or tracing is disabled.
+        """
+        tracking_uri: Optional[str] = getenv("MLFLOW_TRACKING_URI")
+        if not tracking_uri:
+            return func
+    
+        import mlflow
+        from mlflow.entities import SpanType
+
+        if type == "tool":
+            return mlflow.trace(span_type=SpanType.TOOL)(func) # calling decorator mlflow.trace(args) directly
+        elif type == "agent":
+            return mlflow.trace(span_type=SpanType.AGENT)(func)
+        else:
+            raise ValueError(f"Unsupported trace type: {type}")
+
 def enable_tracing() -> None:
     """
     Enable MLflow tracing if MLFLOW_TRACKING_URI is set.
@@ -69,7 +90,7 @@ def enable_tracing() -> None:
         return
 
     import mlflow
-    import mlflow.langchain
+    import mlflow.openai
 
     # Check if server is reachable
     try:
@@ -81,13 +102,13 @@ def enable_tracing() -> None:
                     f"MLFLOW_TRACKING_URI is set but server is unreachable: {tracking_uri}. "
                     f"Start the server or check the URI. Error: {e.detail}"
                 )   
-
+    
     # Server is reachable → enable tracing
     mlflow.set_tracking_uri(tracking_uri)
     experiment_name: str = getenv("MLFLOW_EXPERIMENT_NAME", "default-agent-experiment")
     mlflow.set_experiment(experiment_name)
     mlflow.config.enable_async_logging()
 
-    mlflow.langchain.autolog()
+    mlflow.openai.autolog()
 
     logger.info(f"[Tracing Enabled] MLflow -> {tracking_uri}, Experiment: {experiment_name}")

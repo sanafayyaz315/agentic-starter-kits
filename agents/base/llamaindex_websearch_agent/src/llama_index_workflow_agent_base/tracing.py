@@ -63,7 +63,7 @@ def enable_tracing() -> None:
        - If the server is reachable: tracing is enabled.
        - If the server is unreachable: raise RuntimeError and crash the application.
     """
-    tracking_uri: Optional[str] = os.getenv("MLFLOW_TRACKING_URI")
+    tracking_uri: Optional[str] = getenv("MLFLOW_TRACKING_URI")
     if not tracking_uri:
         logger.info("[Tracing] MLFLOW_TRACKING_URI not set. Tracing is disabled.")
         return
