@@ -1,15 +1,11 @@
 #!/bin/bash
 #
-# init.sh - Environment bootstrap for the LangGraph ReAct Agent
+# init.sh - Environment bootstrap for the CrewAI Web Search Agent
 #
 # Loads environment variables from the .env file located next to this script,
 # validates that all required variables (API_KEY, BASE_URL, MODEL_ID,
 # CONTAINER_IMAGE) are set, and ensures the shared milvus_data directory
 # exists at the repository root.
-
-#
-# Co-Authored-By: Claude Opus 4.6 <noreply@anthropic.com>
-#
 
 # Resolve the directory containing this script (works when sourced or executed)
 # BASH_SOURCE works in bash; ${(%):-%x} is the zsh equivalent
@@ -25,20 +21,8 @@ if [ -f "$ENV_FILE" ]; then
         line="${line//$'\r'/}"
         line="${line#"${line%%[![:space:]]*}"}"
         [[ -z "$line" || "$line" == \#* ]] && continue
-        var_name="${line%%=*}"
-        var_value="${line#*=}"
-        # Strip surrounding quotes from value
-        var_value="${var_value%\"}"
-        var_value="${var_value#\"}"
-        var_value="${var_value%\'}"
-        var_value="${var_value#\'}"
-        # Skip variables with empty values — do not export them
-        if [ -z "$var_value" ]; then
-            echo "  $var_name is empty, skipping export"
-            continue
-        fi
-        export "$var_name=$var_value"
-        ENV_VARS+=("$var_name")
+        export "$line"
+        ENV_VARS+=("${line%%=*}")
     done < "$ENV_FILE"
     echo "Environment variables loaded from $ENV_FILE"
 else
@@ -46,9 +30,13 @@ else
     return 1 2>/dev/null || exit 1
 fi
 
-# 2. Print exported variables
+# 2. Validate every variable found in .env
 for var_name in "${ENV_VARS[@]}"; do
     var_value=$(eval echo "\$$var_name")
+    if [ -z "$var_value" ]; then
+        echo "  ERROR: $var_name is empty. Check your .env file."
+        return 1 2>/dev/null || exit 1
+    fi
     local_lower=$(echo "$var_name" | tr '[:upper:]' '[:lower:]')
     if [[ "$local_lower" == *password* || "$local_lower" == *apikey* || "$local_lower" == *api_key* || "$local_lower" == *secret* || "$local_lower" == *token* ]]; then
         echo "  $var_name=****"

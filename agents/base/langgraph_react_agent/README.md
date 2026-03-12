@@ -239,7 +239,7 @@ Send a test request on `/chat` endpoint
 ```bash
 curl -X POST https://<YOUR_ROUTE_URL>/chat \
   -H "Content-Type: application/json" \
-  -d '{"message": "What is the best company? Answer with the first correct answer."}'
+  -d '{"message": "What is the best cluster hosting service?"}'
 ```
 
 Send a test request on `/stream` endpoint
