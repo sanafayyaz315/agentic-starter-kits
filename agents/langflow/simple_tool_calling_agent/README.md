@@ -118,10 +118,10 @@ Reach out to your cluster admin for the Langflow URL and LlamaStack endpoint/mod
 
 ```bash
 # Langflow UI URL
-oc get routes -n <namespace> | grep langflow
+oc get routes --all-namespaces | grep langflow
 
 # LlamaStack URL
-oc get routes -n <namespace> | grep llama
+oc get routes --all-namespaces | grep llama
 
 # KServe model (internal endpoint + model name)
 oc get inferenceservice --all-namespaces
