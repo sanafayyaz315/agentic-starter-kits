@@ -10,6 +10,7 @@ services:
     environment:
       LANGFLOW_DATABASE_URL: "postgresql://${POSTGRES_USER:-langflow}:${POSTGRES_PASSWORD:-langflow}@postgres:5432/${POSTGRES_DB:-langflow}"
       LANGFLOW_CONFIG_DIR: /var/lib/langflow
+      LANGFLOW_SKIP_AUTH_AUTO_LOGIN: "true"
       # Model endpoint — points to Ollama running on the host machine (not in a container)
       OPENAI_API_BASE: "http://host.containers.internal:11434/v1"
       OPENAI_API_KEY: "not-needed"

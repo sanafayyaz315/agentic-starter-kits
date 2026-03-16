@@ -85,7 +85,7 @@ curl -X POST http://localhost:7860/api/v1/run/<flow-id> \
   -d '{"input_value": "What is the best day to hike near Denver?", "output_type": "chat", "input_type": "chat"}'
 ```
 
-Replace `<flow-id>` with the flow ID from the Langflow UI (visible in the URL when you open the flow).
+Replace `<flow-id>` with the flow ID from the Langflow UI. You can find it in the browser URL bar when you open the flow — e.g., `http://localhost:7860/flow/27e7203d-b2b1-4700-962a-144a66155f14` → the flow ID is `27e7203d-b2b1-4700-962a-144a66155f14`.
 
 On the cluster, replace `localhost:7860` with your cluster's Langflow route URL.
 
