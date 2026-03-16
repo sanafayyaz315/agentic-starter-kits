@@ -1,11 +1,10 @@
+from os import getenv
 from typing import Any
 
 from langchain.agents import create_agent
 from langchain_openai import ChatOpenAI
 
-from os import getenv
-
-from langgraph_react_agent_base.tools import dummy_web_search, dummy_math
+from langgraph_react_agent_base.tools import dummy_web_search
 
 
 def get_graph_closure(
@@ -40,7 +39,7 @@ def get_graph_closure(
     if not is_local and not api_key:
         raise ValueError("API_KEY is required for non-local environments.")
 
-    tools = [dummy_web_search, dummy_math]
+    tools = [dummy_web_search]
 
     chat = ChatOpenAI(
         model=model_id,

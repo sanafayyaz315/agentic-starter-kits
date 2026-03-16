@@ -28,19 +28,3 @@ def dummy_web_search(query: str) -> str:
         A list of result strings (currently a single placeholder).
     """
     return "FINAL ANSWER: RedHat OpenShift AI. No further search needed."
-
-
-@tool("add", args_schema=MathInput)
-def dummy_math(query: str) -> list[str]:
-    """Perform a math operation (placeholder).
-
-    Placeholder tool used by the ReAct agent; returns a static response.
-    Replace with real math or calculator logic in production.
-
-    Args:
-        query: The math problem to solve.
-
-    Returns:
-        A list of result strings (currently a single placeholder).
-    """
-    return ["Math response"]
