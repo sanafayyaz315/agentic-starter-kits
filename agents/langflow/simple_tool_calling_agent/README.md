@@ -132,12 +132,15 @@ oc get inferenceservice --all-namespaces
 1. Open the Langflow UI on your cluster
 2. Import `flows/outdoor-activity-agent.json`
 3. Configure the flow components:
-   - **KServe vLLM**: set `api_base` to your cluster's LLM endpoint and `model_name` to your model ID. You can connect directly to the model or go through LlamaStack:
+   - **KServe vLLM**: set `api_base` and `model_name`. You can connect through LlamaStack or directly to KServe:
 
      | Option | api_base | model_name |
      |--------|----------|------------|
-     | Via LlamaStack | http://llamastack-service.\<namespace\>.svc.cluster.local:8321/v1 | vllm//mnt/models |
-     | Direct to KServe | http://\<model\>-predictor.\<namespace\>.svc.cluster.local:8080/v1 | /mnt/models |
+     | Via LlamaStack (external route) | https://\<llamastack-route-host\>/v1 | vllm//mnt/models |
+     | Via LlamaStack (internal) | http://llamastack-service.\<namespace\>.svc.cluster.local:8321/v1 | vllm//mnt/models |
+     | Direct to KServe (internal) | http://\<model\>-predictor.\<namespace\>.svc.cluster.local:8080/v1 | /mnt/models |
+
+     Use the external route if Langflow can't reach LlamaStack internally (network policy). Use `oc get routes` and `oc get inferenceservice` to find the actual hostnames and namespaces.
    - **NPS Search Parks**: set `api_key` (get one free at https://developer.nps.gov)
    - **NPS Park Alerts**: set `api_key` (same NPS key)
 4. Run the agent
