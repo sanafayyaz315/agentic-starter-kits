@@ -85,15 +85,13 @@ echo "Starting local stack (Langflow + PostgreSQL + Langfuse)..."
 podman-compose up -d
 
 echo ""
-printf "Waiting for Langflow to start (this may take a minute)... "
-SPIN='|/-\'
-for i in $(seq 1 60); do
+echo "Waiting for Langflow to start (this may take a minute)..."
+for i in $(seq 1 24); do
   if curl -s http://localhost:7860/health >/dev/null 2>&1; then
-    printf "\r%s\n" "Waiting for Langflow to start (this may take a minute)... done"
+    echo "Langflow is ready!"
     break
   fi
-  printf "\b${SPIN:i%4:1}"
-  sleep 2
+  sleep 5
 done
 
 echo ""
