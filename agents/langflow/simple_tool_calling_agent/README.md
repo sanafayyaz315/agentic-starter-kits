@@ -52,7 +52,7 @@ chmod +x deploy-local.sh cleanup-local.sh
 
 This starts:
 - **Langflow** on http://localhost:7860 — the agent UI
-- **PostgreSQL** — shared database for Langflow and Langfuse
+- **PostgreSQL** — shared database server. Hosts two databases: `langflow` (flows, users, settings) and `langfuse` (traces). The `langflow` database is created automatically by PostgreSQL; the `langfuse` database is created by `local/init-db.sh` on first startup
 - **Ollama** on http://localhost:11434 — local LLM (qwen2.5:7b), runs natively on host for GPU acceleration
 - **Langfuse v2** on http://localhost:3000 — tracing (admin@langflow.local / admin123)
 
