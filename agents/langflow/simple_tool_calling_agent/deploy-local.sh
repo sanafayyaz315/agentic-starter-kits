@@ -85,8 +85,13 @@ echo "Starting local stack (Langflow + PostgreSQL + Langfuse)..."
 podman-compose up -d
 
 echo ""
-echo "Waiting for services to start..."
-sleep 10
+echo "Waiting for Langflow to start (this may take a minute)..."
+for i in $(seq 1 60); do
+  if curl -s http://localhost:7860/health >/dev/null 2>&1; then
+    break
+  fi
+  sleep 2
+done
 
 echo ""
 echo "=== Local environment is ready ==="
@@ -94,7 +99,7 @@ echo ""
 echo "  Langflow UI:  http://localhost:7860"
 echo "  Langfuse:     http://localhost:3000  (login: admin@langflow.local / admin123)"
 if [ "$USE_OLLAMA" = "yes" ]; then
-  echo "  Ollama API:   http://localhost:11434  (running natively with GPU)"
+  echo "  Ollama API:   http://localhost:11434  (running natively on host)"
 fi
 echo ""
 echo "  Next steps:"

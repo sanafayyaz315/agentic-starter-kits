@@ -20,7 +20,7 @@ services:
       LANGFUSE_PUBLIC_KEY: "pk-lf-local-dev"
       LANGFUSE_SECRET_KEY: "sk-lf-local-dev"
     volumes:
-      - langflow_data:/var/lib/langflow
+      - langflow_data:/var/lib/langflow:Z
     depends_on:
       postgres:
         condition: service_healthy
@@ -35,8 +35,8 @@ services:
       POSTGRES_PASSWORD: ${POSTGRES_PASSWORD:-langflow}
       POSTGRES_DB: ${POSTGRES_DB:-langflow}
     volumes:
-      - postgres_data:/var/lib/postgresql/data
-      - ./init-db.sh:/docker-entrypoint-initdb.d/init-db.sh
+      - postgres_data:/var/lib/postgresql/data:Z
+      - ./init-db.sh:/docker-entrypoint-initdb.d/init-db.sh:Z
     healthcheck:
       test: ["CMD-SHELL", "pg_isready -U ${POSTGRES_USER:-langflow}"]
       interval: 5s

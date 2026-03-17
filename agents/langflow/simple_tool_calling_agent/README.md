@@ -45,7 +45,7 @@ Outdoor activity planning agent built with Langflow. It recommends the best day 
 ### Start the local stack
 
 ```bash
-cd agents/base/langflow_simple_tool_calling_agent
+cd agents/langflow/simple_tool_calling_agent
 chmod +x deploy-local.sh cleanup-local.sh
 ./deploy-local.sh
 ```
