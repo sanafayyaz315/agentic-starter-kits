@@ -10,6 +10,7 @@ from fastapi.responses import StreamingResponse
 from pydantic import BaseModel
 
 from crewai_web_search.crew import AssistanceAgents
+from crewai_web_search.tracing import enable_tracing
 
 
 class ChatRequest(BaseModel):
@@ -46,6 +47,7 @@ def _clean_content(text: str) -> str:
 async def lifespan(app: FastAPI):
     """Initialize the CrewAI LLM on startup."""
     global llm
+    enable_tracing()
 
     base_url = getenv("BASE_URL")
     model_id = getenv("MODEL_ID")
