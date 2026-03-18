@@ -9,3 +9,7 @@ __pycache__
 .venv
 dist
 config.toml
+*.egg-info/
+*.db
+CLAUDE.md
+agents/demo/
