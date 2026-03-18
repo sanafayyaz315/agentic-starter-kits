@@ -1,6 +1,7 @@
 from os import getenv
 import time
 import requests
+from dotenv import load_dotenv
 from fastapi import HTTPException
 from typing import Optional
 
@@ -63,6 +64,7 @@ def enable_tracing() -> None:
        - If the server is reachable: tracing is enabled.
        - If the server is unreachable: raise RuntimeError and crash the application.
     """
+    load_dotenv()
     tracking_uri: Optional[str] = getenv("MLFLOW_TRACKING_URI")
     if not tracking_uri:
         logger.info("[Tracing] MLFLOW_TRACKING_URI not set. Tracing is disabled.")
