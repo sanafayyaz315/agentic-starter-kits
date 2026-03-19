@@ -19,6 +19,7 @@ dependencies = [
     "setuptools>=80.9.0,<82.0.0",
     "chardet>=7.1.0",
     "pypdf>=6.9.0",
+    "flask>=3.1.0",
 ]
 
 [project.optional-dependencies]
