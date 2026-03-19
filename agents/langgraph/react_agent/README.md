@@ -187,7 +187,7 @@ Send a test request:
 Non-streaming
 
 ```bash
-curl -X POST https://<YOUR_ROUTE_URL>/chat/completions \
+curl -X POST https://langgraph-react-agent-tguzik-agents.apps.rosa.ai-eng-gpu.socc.p3.openshiftapps.com/chat/completions \
   -H "Content-Type: application/json" \
   -d '{"messages": [{"role": "user", "content": "What is the best cluster hosting service?"}], "stream": false}'
 ```
@@ -213,7 +213,8 @@ curl -X POST https://<YOUR_ROUTE_URL>/chat/completions \
 
 ## Playground UI
 
-A browser-based chat interface for interacting with the agent. Built with Flask, it provides a simple chat window with streaming responses — no curl needed.
+A browser-based chat interface for interacting with the agent. Built with Flask, it provides a simple chat window with
+streaming responses — no curl needed.
 
 ### Prerequisites
 
@@ -239,9 +240,9 @@ A green dot in the header means the agent is connected and ready. Type a message
 
 ### Configuration
 
-| Variable    | Default                  | Description                     |
-|-------------|--------------------------|---------------------------------|
-| `AGENT_URL` | `http://localhost:8000`  | URL of the running agent API    |
+| Variable    | Default                 | Description                  |
+|-------------|-------------------------|------------------------------|
+| `AGENT_URL` | `http://localhost:8000` | URL of the running agent API |
 
 If the agent runs on a different host or port:
 
