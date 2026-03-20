@@ -58,8 +58,17 @@ def health():
     try:
         resp = http_requests.get(f"{AGENT_URL}/health", timeout=5)
         return jsonify(resp.json())
-    except Exception as e:
-        return jsonify({"status": "unreachable", "error": str(e)}), 503
+    except Exception:
+        logger.exception("Error checking agent health")
+        return (
+            jsonify(
+                {
+                    "status": "unreachable",
+                    "error": "Agent is unreachable. Please try again later.",
+                }
+            ),
+            503,
+        )
 
 
 @app.route("/api/chat", methods=["POST"])
