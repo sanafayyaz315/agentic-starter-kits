@@ -77,7 +77,7 @@ if [ "$USE_OLLAMA" = "yes" ]; then
   fi
 fi
 
-cd "$LOCAL_DIR"
+cd "$LOCAL_DIR" || { echo "ERROR: Directory $LOCAL_DIR not found."; exit 1; }
 
 # Start containerized services (Langflow, PostgreSQL, Langfuse)
 echo ""

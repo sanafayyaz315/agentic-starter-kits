@@ -5,7 +5,7 @@ set -uo pipefail
 SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
 LOCAL_DIR="$SCRIPT_DIR/local"
 
-cd "$LOCAL_DIR"
+cd "$LOCAL_DIR" || { echo "ERROR: Directory $LOCAL_DIR not found."; exit 1; }
 
 stop_ollama() {
   if pgrep -f "ollama serve" >/dev/null 2>&1; then

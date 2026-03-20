@@ -216,22 +216,10 @@ After running the agent, traces are automatically sent to Langfuse.
 
 ## Exporting flows
 
-When you export a flow from Langflow (e.g., to share with your team or commit to the repo), **API keys and secrets are embedded in the exported JSON file**. Before sharing or committing:
+When exporting a flow from Langflow, API keys and secrets can be embedded in the exported JSON file. To avoid leaking secrets:
 
-1. Open the exported JSON file
-2. Search for `"api_key"` fields and clear their `"value"` entries
-3. Or use this command to strip all API keys:
-   ```bash
-   python3 -c "
-   import json, sys
-   with open(sys.argv[1]) as f: d = json.load(f)
-   for n in d.get('data',{}).get('nodes',[]):
-       t = n.get('data',{}).get('node',{}).get('template',{})
-       if 'api_key' in t and t['api_key'].get('value'):
-           t['api_key']['value'] = ''
-   with open(sys.argv[1],'w') as f: json.dump(d, f, indent=2)
-   " flows/outdoor-activity-agent.json
-   ```
+1. In the export dialog, **uncheck "Save with API keys"** — this excludes all API keys from the exported file
+2. If you already exported with keys included, you can strip them manually by searching for `"api_key"` fields in the JSON and clearing their `"value"` entries
 
 ---
 

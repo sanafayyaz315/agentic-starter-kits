@@ -14,4 +14,3 @@ milvus_data/
 *.egg-info/
 uv.lock
 agents/langflow/simple_tool_calling_agent/local/.ollama-enabled
-agents/langflow/simple_tool_calling_agent/local/.env
