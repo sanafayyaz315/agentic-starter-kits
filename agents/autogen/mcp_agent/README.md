@@ -58,6 +58,7 @@ CONTAINER_IMAGE=quay.io/your-username/autogen-agent:latest
 CONTAINER_IMAGE_MCP=quay.io/your-username/mcp-automl:latest
 DEPLOYMENT_URL=https://...
 DEPLOYMENT_TOKEN=...
+DISABLE_DNS_REBINDING_PROTECTION=true
 ```
 
 **Notes:**

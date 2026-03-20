@@ -21,6 +21,7 @@ cd "$ROOT"
 source "${ROOT}/scripts/load_env_safe.sh"
 load_env_safe "${ROOT}/.env"
 export CONTAINER_IMAGE_MCP DEPLOYMENT_URL DEPLOYMENT_TOKEN
+export DISABLE_DNS_REBINDING_PROTECTION="${DISABLE_DNS_REBINDING_PROTECTION:-false}"
 
 ## ============================================
 # DOCKER BUILD – MCP AutoML Server

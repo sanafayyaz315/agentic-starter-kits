@@ -44,6 +44,8 @@ spec:
         # Trust OpenShift Route (reverse proxy); avoids 421 Invalid Host header
         - name: UVICORN_FORWARDED_ALLOW_IPS
           value: "*"
+        - name: DISABLE_DNS_REBINDING_PROTECTION
+          value: "${DISABLE_DNS_REBINDING_PROTECTION}"
         - name: DEPLOYMENT_URL
           value: "${DEPLOYMENT_URL}"
         - name: DEPLOYMENT_TOKEN
