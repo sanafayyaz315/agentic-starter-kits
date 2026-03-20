@@ -56,7 +56,7 @@ def health():
     """Check if the agent is reachable."""
     try:
         resp = http_requests.get(f"{AGENT_URL}/health", timeout=5)
-        return jsonify(resp.json())
+        return jsonify(resp.json()), resp.status_code
     except Exception:
         logger.exception("Error checking agent health")
         return (
@@ -73,7 +73,7 @@ def health():
 @app.route("/api/chat", methods=["POST"])
 def chat():
     """Proxy chat requests to the agent with streaming."""
-    data = request.get_json()
+    data = request.get_json() or {}
     messages = data.get("messages", [])
 
     payload = {
@@ -127,7 +127,7 @@ def chat():
             yield f"data: {error}\n\n"
         except Exception as e:
             logger.exception("Unexpected error in proxy")
-            error = json.dumps({"error": {"message": str(e)}})
+            error = json.dumps({"error": {"message": "Internal server error"}})
             yield f"data: {error}\n\n"
 
     return Response(
