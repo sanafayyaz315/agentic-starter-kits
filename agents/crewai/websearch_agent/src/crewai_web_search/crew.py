@@ -26,6 +26,9 @@ class AssistanceAgents:
     @agent
     def ai_assistant(self) -> Agent:
         tools = [WebSearchTool()]
+        # Manual tool tracing: mlflow.crewai.autolog() does not capture tool spans
+        # in newer CrewAI versions (>=1.10). If a future version fixes this, remove
+        # the manual wrapping below to avoid duplicate tool spans.
         for tool in tools:
             tool._run = wrap_func_with_mlflow_trace(tool._run, type="tool", name=tool.name)
 

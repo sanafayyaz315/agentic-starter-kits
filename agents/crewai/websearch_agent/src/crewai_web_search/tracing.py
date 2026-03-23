@@ -111,7 +111,11 @@ def enable_tracing() -> None:
     mlflow.set_experiment(experiment_name)
     mlflow.config.enable_async_logging()
 
-    # CrewAI orchestration tracing (Crew, Task, Agent, Tool spans) — always enabled
+    # CrewAI orchestration tracing (Crew, Task, Agent spans).
+    # Note: autolog does not capture Tool spans in newer CrewAI versions (>=1.10).
+    # Tool spans are manually traced via wrap_func_with_mlflow_trace in crew.py.
+    # If a future CrewAI/MLflow version fixes autolog to capture tool spans,
+    # remove the manual wrapping in crew.py to avoid duplicate tool spans.
     mlflow.crewai.autolog()
 
     # LLM call-level tracing — depends on which provider path CrewAI uses.
