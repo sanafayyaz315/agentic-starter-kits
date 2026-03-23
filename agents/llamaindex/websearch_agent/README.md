@@ -43,6 +43,15 @@ API_KEY=not-needed
 CONTAINER_IMAGE=not-needed
 ```
 
+##### Tracing
+
+```
+MLFLOW_TRACKING_URI="http://localhost:5000"
+MLFLOW_EXPERIMENT_NAME="LlamaIndex Local Experiment"
+MLFLOW_HTTP_REQUEST_TIMEOUT=2
+MLFLOW_HTTP_REQUEST_MAX_RETRIES=0
+```
+
 #### OpenShift Cluster
 
 Edit the `.env` file and fill in all required values:
@@ -68,6 +77,29 @@ CONTAINER_IMAGE=quay.io/your-username/llamaindex-websearch-agent:latest
     - Quay.io: `quay.io/your-username/llamaindex-websearch-agent:latest`
     - Docker Hub: `docker.io/your-username/llamaindex-websearch-agent:latest`
     - GHCR: `ghcr.io/your-org/llamaindex-websearch-agent:latest`
+
+##### Tracing
+
+To enable tracing and logging with MLflow on your OpenShift cluster, add the following environment variables to your `.env` file:
+
+```
+MLFLOW_TRACKING_URI="https://<openshift-dashboard-url>/mlflow"
+MLFLOW_TRACKING_TOKEN="<your-openshift-token>"
+MLFLOW_EXPERIMENT_NAME="<your-experiment-name>"
+MLFLOW_TRACKING_INSECURE_TLS="true"
+MLFLOW_WORKSPACE="default"
+```
+
+**Notes:**
+- `MLFLOW_TRACKING_URI` - Replace `<openshift-dashboard-url>` with your OpenShift cluster's data science gateway URL
+- `MLFLOW_TRACKING_TOKEN` - Your openshift authentication token. It can be obtained from the openshift console.
+- `MLFLOW_EXPERIMENT_NAME` - A descriptive name for your experiment (e.g., "LlamaIndex Cluster Demo")
+- `MLFLOW_TRACKING_INSECURE_TLS` - Set to `"true"` if your OpenShift cluster does not use trusted certificates
+- `MLFLOW_WORKSPACE` - Project name
+
+- Tracing is optional; if you do not set MLFLOW_TRACKING_URI, the application will run without MLflow logging.
+
+- If MLFLOW_TRACKING_URI is set, the application will attempt to connect to the MLflow server at startup. The MLflow server must be running before starting the application, otherwise startup will fail.
 
 Create and activate a virtual environment (Python 3.12) in this directory using [uv](https://docs.astral.sh/uv/):
 
@@ -104,6 +136,11 @@ uv pip install -e .
 uv pip install ollama
 ```
 
+Install mlflow (>=3.10.0) - *Optional: Only required if tracing is enabled*
+```bash
+uv pip install mlflow
+```
+
 Install app from Ollama site or via Brew
 
 ```bash
@@ -126,6 +163,12 @@ ollama serve
 
 > **Keep this terminal open!**\
 > Ollama needs to keep running.
+
+Start MLflow Server
+```bash
+mlflow server --port 5000
+```
+>**Keep this terminal open** - the server needs to keep running.
 
 Start LlamaStack Server
 
@@ -154,6 +197,11 @@ Login ex. Docker
 
 ```bash
 docker login -u='login' -p='password' quay.io
+```
+
+Install MLflow for RHOAI 3.2 or 3.3 - *Optional: Only required if tracing is enabled*
+```bash
+uv pip install "git+https://github.com/red-hat-data-services/mlflow@rhoai-3.3"
 ```
 
 Make deploy file executable

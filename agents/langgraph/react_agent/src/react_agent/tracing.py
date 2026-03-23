@@ -1,0 +1,95 @@
+from os import getenv
+import time
+import requests
+from dotenv import load_dotenv
+from fastapi import HTTPException
+from typing import Optional
+
+import logging
+
+logger = logging.getLogger("tracing")
+logger.setLevel(logging.INFO)
+if not logger.handlers:
+    handler = logging.StreamHandler()
+    formatter = logging.Formatter(
+    "[%(asctime)s] [%(levelname)s] %(message)s"
+)
+    handler.setFormatter(formatter)
+    logger.addHandler(handler)
+
+def check_mlflow_health(mlflow_tracking_uri: str, max_wait_time: int = 60, retry_interval: int = 1) -> None:
+    """
+    Check MLflow health by trying the /health endpoint. If it fails, retry for a certain duration before giving up.
+    args:
+        mlflow_tracking_uri: base URI of the MLflow server
+        max_wait_time: total time to keep retrying before giving up (in seconds)
+        retry_interval: time to wait between retries (in seconds)
+    """
+    mlflow_health_endpoint = "/health"
+    mlflow_url = f"{mlflow_tracking_uri.rstrip('/')}{mlflow_health_endpoint}"
+    start_time = time.time()
+
+    while True:
+        try:
+            response = requests.get(mlflow_url, timeout=5)
+            if response.status_code == 200:
+                logger.info(f"MLflow health check passed at {mlflow_url} with status code {response.status_code}.")
+                return  # Success, exit the function without error
+            else:
+                logger.warning(
+                    f"MLflow returned status code {response.status_code} at {mlflow_url}\n"
+                    f"  Status Code: {response.status_code}\n"
+                    f"  Reason: {response.reason_phrase}\n"
+                    f"  Response Body: {response.text[:500]}"
+                )
+        except requests.exceptions.RequestException as e:
+            logger.warning(f"Failed to connect to MLflow at {mlflow_url}: {e}")
+
+        elapsed_time = time.time() - start_time
+        if elapsed_time >= max_wait_time:
+            logger.error(f"MLflow server is unavailable after {max_wait_time} seconds of checking.")
+            raise RuntimeError("MLflow server is unavailable. Please start the server or check the URI.")
+
+        logger.warning(f"Retrying in {retry_interval} seconds...")
+        time.sleep(retry_interval)
+
+def enable_tracing() -> None:
+    """
+    Enable MLflow tracing if MLFLOW_TRACKING_URI is set.
+
+    Behavior:
+    1. If MLFLOW_TRACKING_URI is not set: tracing is skipped.
+    2. If MLFLOW_TRACKING_URI is set:
+       - Try to connect to the server.
+       - If the server is reachable: tracing is enabled.
+       - If the server is unreachable: raise RuntimeError and crash the application.
+    """
+    load_dotenv()
+    tracking_uri: Optional[str] = getenv("MLFLOW_TRACKING_URI")
+    if not tracking_uri:
+        logger.info("[Tracing] MLFLOW_TRACKING_URI not set. Tracing is disabled.")
+        return
+
+    import mlflow
+    import mlflow.langchain
+
+    # Check if server is reachable
+    try:
+        check_mlflow_health(mlflow_tracking_uri=tracking_uri)
+        logger.info(f"[Tracing] MLflow server is reachable at {tracking_uri}")
+    except HTTPException as e:
+        logger.warning(f"[Tracing] MLflow server is unreachable at {tracking_uri}")
+        raise RuntimeError(
+                    f"MLFLOW_TRACKING_URI is set but server is unreachable: {tracking_uri}. "
+                    f"Start the server or check the URI. Error: {e.detail}"
+                )
+
+    # Server is reachable → enable tracing
+    mlflow.set_tracking_uri(tracking_uri)
+    experiment_name: str = getenv("MLFLOW_EXPERIMENT_NAME", "default-agent-experiment")
+    mlflow.set_experiment(experiment_name)
+    mlflow.config.enable_async_logging()
+
+    mlflow.langchain.autolog()
+
+    logger.info(f"[Tracing Enabled] MLflow -> {tracking_uri}, Experiment: {experiment_name}")
