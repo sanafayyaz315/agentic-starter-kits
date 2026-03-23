@@ -3,7 +3,7 @@ import time
 import requests
 from dotenv import load_dotenv
 from fastapi import HTTPException
-from typing import Optional
+from typing import Callable, Optional
 
 import logging
 
@@ -52,6 +52,27 @@ def check_mlflow_health(mlflow_tracking_uri: str, max_wait_time: int = 60, retry
 
         logger.warning(f"Retrying in {retry_interval} seconds...")
         time.sleep(retry_interval)
+
+def wrap_func_with_mlflow_trace(func: Callable, type: str, name: str = None) -> Callable:
+    """
+    Wrap a function with MLflow.trace(span_type=SpanType.<type>) if MLflow is enabled.
+
+    Returns the original function if MLflow is not installed or tracing is disabled.
+    """
+    tracking_uri: Optional[str] = getenv("MLFLOW_TRACKING_URI")
+    if not tracking_uri:
+        return func
+
+    import mlflow
+    from mlflow.entities import SpanType
+
+    if type == "tool":
+        return mlflow.trace(span_type=SpanType.TOOL, name=name)(func)
+    elif type == "agent":
+        return mlflow.trace(span_type=SpanType.AGENT, name=name)(func)
+    else:
+        raise ValueError(f"Unsupported trace type: {type}")
+
 
 def enable_tracing() -> None:
     """

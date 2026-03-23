@@ -14,7 +14,6 @@ from io import StringIO
 from os import getenv
 from typing import Any, Callable, Dict, List, Optional
 
-from anyio import current_time
 from dotenv import load_dotenv
 from openai import OpenAI
 
