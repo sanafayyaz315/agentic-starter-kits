@@ -129,7 +129,7 @@ def chat():
             logger.error("Agent request timed out")
             error = json.dumps({"error": {"message": "Agent request timed out (300s)"}})
             yield f"data: {error}\n\n"
-        except Exception as e:
+        except Exception:
             logger.exception("Unexpected error in proxy")
             error = json.dumps({"error": {"message": "Internal server error"}})
             yield f"data: {error}\n\n"
