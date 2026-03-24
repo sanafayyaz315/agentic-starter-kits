@@ -101,9 +101,11 @@ MLFLOW_WORKSPACE="<your project name>"
 - `MLFLOW_TRACKING_INSECURE_TLS` – Set to `"true"` if your OpenShift cluster does not use trusted certificates
 - `MLFLOW_WORKSPACE` – Project name
 
-- Tracing is optional; if you do not set MLFLOW_TRACKING_URI, the application will run without MLflow logging.
+- Tracing is optional; if you do not set `MLFLOW_TRACKING_URI`, the application will run without MLflow logging.
 
-- If MLFLOW_TRACKING_URI is set, the application will attempt to connect to the MLflow server at startup. The MLflow server must be running before starting the application, otherwise startup will fail.
+- If `MLFLOW_TRACKING_URI` is set, the application will attempt to connect to the MLflow server at startup. If the server is unreachable, the application will log a warning and continue running without tracing.
+
+- You can control how long the application waits for the MLflow server by setting `MLFLOW_HEALTH_CHECK_TIMEOUT` (in seconds, default: `5`).
 
 Create and activate a virtual environment (Python 3.12) in this directory using [uv](https://docs.astral.sh/uv/):
 
@@ -138,7 +140,7 @@ uv pip install -e .
 
 Install mlflow (>=3.10.0) - *Optional: Only required if tracing is enabled*
 ```bash
-uv pip install mlflow
+uv pip install "mlflow>=3.10.0"
 ```
 
 Install Ollama from the [Ollama site](https://ollama.com/) or via Brew:
