@@ -62,6 +62,9 @@ agentic-starter-kits/
 │   │   └── mcp_agent/               # AutoGen + MCP (SSE)
 │   └── langflow/
 │       └── simple_tool_calling_agent/ # Langflow tool-calling agent
+├── charts/
+│   └── agent/                       # Shared Helm chart for all agents
+├── docs/                            # Guides: local dev, deployment, contributing
 └── README.md
 ```
 
@@ -100,6 +103,12 @@ curl -LsSf https://astral.sh/uv/install.sh | sh
 ```
 
 ---
+
+## Documentation
+
+- [Local Development](./docs/local-development.md) — Ollama + Llama Stack setup
+- [OpenShift Deployment](./docs/openshift-deployment.md) — Helm-based deployment guide
+- [Adding a New Agent](./docs/adding-a-new-agent.md) — How to contribute a new agent template
 
 ## Additional Resources
 
