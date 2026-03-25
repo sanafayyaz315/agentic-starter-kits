@@ -20,6 +20,7 @@ Agent built on LlamaIndex that uses a web search tool to query the internet and 
 - [Podman](https://podman.io/) or [Docker](https://www.docker.com/) — for local container builds (Option A)
 - [oc](https://docs.openshift.com/container-platform/latest/cli_reference/openshift_cli/getting-started-cli.html) — for OpenShift deployment
 - [Helm](https://helm.sh/) — for deploying to Kubernetes/OpenShift
+- [GNU Make](https://www.gnu.org/software/make/) and a bash-compatible shell — on Windows, use [WSL](https://learn.microsoft.com/en-us/windows/wsl/install) (recommended) or [Git Bash](https://git-scm.com/downloads)
 
 ## Quick Start
 

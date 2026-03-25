@@ -1,3 +1,4 @@
+SHELL          := bash
 AGENT_NAME     := $(shell python3 -c "import re; print(re.search(r'^name:\s*(.+)', open('agent.yaml').read(), re.M).group(1).strip())")
 CHART_DIR      := ../../../charts/agent
 VALUES_FILE    := values.yaml
@@ -61,8 +62,10 @@ deploy: _check-env ## Deploy to OpenShift/K8s via Helm
 	    --set image.tag="$${IMAGE_TAG}" \
 	    --set env.BASE_URL="$${BASE_URL}" \
 	    --set env.MODEL_ID="$${MODEL_ID}" && \
-	  ROUTE=$$(oc get route $(AGENT_NAME) -o jsonpath='{.spec.host}' 2>/dev/null) && \
-	  if [ -n "$$ROUTE" ]; then echo "" && echo "Agent is available at: https://$$ROUTE" && echo "Note: It may take about a minute for the application to become available."; fi
+	  if command -v oc >/dev/null 2>&1; then \
+	    ROUTE=$$(oc get route $(AGENT_NAME) -o jsonpath='{.spec.host}' 2>/dev/null || true); \
+	    if [ -n "$$ROUTE" ]; then echo "" && echo "Agent is available at: https://$$ROUTE" && echo "Note: It may take about a minute for the application to become available."; fi; \
+	  fi
 
 dry-run: _check-env ## Render Helm templates without deploying
 	@source .env && \
