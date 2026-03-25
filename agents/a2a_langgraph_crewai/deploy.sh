@@ -19,8 +19,32 @@ set -e
 SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
 cd "$SCRIPT_DIR"
 
-if [ -z "${API_KEY:-}" ] || [ -z "${BASE_URL:-}" ] || [ -z "${MODEL_ID:-}" ] \
-  || [ -z "${CONTAINER_IMAGE_CREW:-}" ] || [ -z "${CONTAINER_IMAGE_LANGGRAPH:-}" ]; then
+# Strip optional digest (@sha256:…) and image tag (e.g. …:latest) from registry/ref.
+# Same ref with two tags (:crew / :langgraph) is how one repo holds both builds.
+_image_ref_base() {
+    local r="${1%%@*}"
+    local tail="${r##*/}"
+    if [[ "$tail" == *:* ]]; then
+        echo "${r%:*}"
+    else
+        echo "$r"
+    fi
+}
+
+if [ -n "${CONTAINER_IMAGE_CREW:-}" ] && [ -n "${CONTAINER_IMAGE_LANGGRAPH:-}" ]; then
+    :
+elif [ -n "${CONTAINER_IMAGE:-}" ]; then
+    _base="$(_image_ref_base "$CONTAINER_IMAGE")"
+    export CONTAINER_IMAGE_CREW="${_base}:crew"
+    export CONTAINER_IMAGE_LANGGRAPH="${_base}:langgraph"
+    echo "Using container images: ${CONTAINER_IMAGE_CREW} , ${CONTAINER_IMAGE_LANGGRAPH}"
+else
+    echo "ERROR: Set CONTAINER_IMAGE (like other agents), e.g. quay.io/org/repo:latest"
+    echo "  or set both CONTAINER_IMAGE_CREW and CONTAINER_IMAGE_LANGGRAPH."
+    exit 1
+fi
+
+if [ -z "${API_KEY:-}" ] || [ -z "${BASE_URL:-}" ] || [ -z "${MODEL_ID:-}" ]; then
   echo "ERROR: Required environment variables are missing."
   echo "From this directory run: source ./init.sh"
   echo "(after cp template.env .env and filling values)"
@@ -33,13 +57,13 @@ export CONTAINER_IMAGE_CREW CONTAINER_IMAGE_LANGGRAPH BASE_URL MODEL_ID
 # DOCKER BUILD
 ## ============================================
 
+# Same Dockerfile for both; image bytes are identical (role = A2A_ROLE in Kubernetes).
+# Two buildx runs match "two agents"; the second is usually a full cache hit.
 docker buildx build --platform linux/amd64 \
-  --build-arg A2A_ROLE=crew \
-  -t "${CONTAINER_IMAGE_CREW}" -f Dockerfile --push . && echo "Docker build (crew) completed"
+  -t "${CONTAINER_IMAGE_CREW}" -f Dockerfile --push . && echo "Docker build (Crew image ref) completed"
 
 docker buildx build --platform linux/amd64 \
-  --build-arg A2A_ROLE=langgraph \
-  -t "${CONTAINER_IMAGE_LANGGRAPH}" -f Dockerfile --push . && echo "Docker build (langgraph) completed"
+  -t "${CONTAINER_IMAGE_LANGGRAPH}" -f Dockerfile --push . && echo "Docker build (LangGraph image ref) completed"
 
 ## ============================================
 # OPENSHIFT CREATE SECRET
@@ -95,4 +119,4 @@ oc rollout status deployment/a2a-langgraph-agent --timeout=300s && echo "Deploym
 
 echo "=== Done ==="
 oc get route a2a-crew-agent a2a-langgraph-agent
-echo "Orchestrator (demo client): set LANGGRAPH_A2A_PUBLIC_URL to https://${LG_PUBLIC_HOST} and run: uv run python demo_client.py"
+echo "Orchestrator (demo client): set LANGGRAPH_A2A_PUBLIC_URL to https://${LG_PUBLIC_HOST} and run: uv run python -m a2a_langgraph_crewai.demo_client"

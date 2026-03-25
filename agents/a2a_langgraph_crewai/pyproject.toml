@@ -19,5 +19,5 @@ dependencies = [
 requires = ["setuptools>=61"]
 build-backend = "setuptools.build_meta"
 
-[tool.setuptools]
-py-modules = ["a2a_reply", "crew_a2a_server", "langgraph_a2a_server", "demo_client"]
+[tool.setuptools.packages.find]
+where = ["src"]

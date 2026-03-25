@@ -1,4 +1,4 @@
-# CrewAI A2A specialist — build image with: docker build --build-arg A2A_ROLE=crew ...
+# CrewAI A2A specialist — image is role-agnostic; A2A_ROLE selects process at runtime.
 #
 # Required envsubst vars: CONTAINER_IMAGE_CREW, CREW_A2A_PUBLIC_URL, BASE_URL, MODEL_ID
 # Secret: a2a-langgraph-crewai-secrets (key api-key)
@@ -28,6 +28,8 @@ spec:
               name: http
               protocol: TCP
           env:
+            - name: A2A_ROLE
+              value: "crew"
             - name: PORT
               value: "8080"
             - name: CREW_A2A_PUBLIC_URL

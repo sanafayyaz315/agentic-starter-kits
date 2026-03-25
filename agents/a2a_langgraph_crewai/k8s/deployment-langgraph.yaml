@@ -1,4 +1,4 @@
-# LangGraph A2A orchestrator — build image with: docker build --build-arg A2A_ROLE=langgraph ...
+# LangGraph A2A orchestrator — image is role-agnostic; A2A_ROLE selects process at runtime.
 #
 # Calls Crew in-cluster: CREW_A2A_URL must match Service a2a-crew-agent:8080
 # Required envsubst: CONTAINER_IMAGE_LANGGRAPH, LANGGRAPH_A2A_PUBLIC_URL, BASE_URL, MODEL_ID
@@ -28,6 +28,8 @@ spec:
               name: http
               protocol: TCP
           env:
+            - name: A2A_ROLE
+              value: "langgraph"
             - name: PORT
               value: "8080"
             - name: LANGGRAPH_A2A_PUBLIC_URL

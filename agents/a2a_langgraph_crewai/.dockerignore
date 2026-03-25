@@ -7,4 +7,3 @@ k8s
 *.md
 deploy.sh
 template.env
-demo_client.py

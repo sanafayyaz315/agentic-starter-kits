@@ -8,7 +8,7 @@
 
 ## What this agent does
 
-An **A2A (Agent-to-Agent)** example: a **CrewAI** pod exposes an A2A JSON-RPC server, and a **LangGraph** pod acts as an orchestrator that calls the Crew specialist over HTTP/A2A inside the cluster (or locally). Both images are built from one `Dockerfile` with `A2A_ROLE=crew` or `langgraph`.
+An **A2A (Agent-to-Agent)** example: a **CrewAI** pod exposes an A2A JSON-RPC server, and a **LangGraph** pod acts as an orchestrator that calls the Crew specialist over HTTP/A2A inside the cluster (or locally). One container image is built from a single `Dockerfile`; **`A2A_ROLE`** in the pod (`crew` vs `langgraph`) selects which process runs.
 
 ---
 
@@ -38,8 +38,7 @@ Edit `.env` for local dev. You can use placeholders for images if you only run P
 API_KEY=your-key-or-not-needed
 BASE_URL=http://localhost:8321/v1
 MODEL_ID=ollama/llama3.1:8b
-CONTAINER_IMAGE_CREW=not-needed
-CONTAINER_IMAGE_LANGGRAPH=not-needed
+CONTAINER_IMAGE=not-needed
 CREW_A2A_PUBLIC_URL=http://127.0.0.1:9100
 LANGGRAPH_A2A_PUBLIC_URL=http://127.0.0.1:9200
 CREW_A2A_URL=http://127.0.0.1:9100
@@ -55,8 +54,7 @@ Edit `.env` and fill in all required values:
 API_KEY=your-api-key-here
 BASE_URL=https://your-llama-stack.example.com/v1
 MODEL_ID=your-model-id
-CONTAINER_IMAGE_CREW=quay.io/your-org/a2a-langgraph-crewai:crew
-CONTAINER_IMAGE_LANGGRAPH=quay.io/your-org/a2a-langgraph-crewai:langgraph
+CONTAINER_IMAGE=quay.io/your-org/a2a-langgraph-crewai:latest
 ```
 
 For deploy, `CREW_A2A_PUBLIC_URL` / `LANGGRAPH_A2A_PUBLIC_URL` are set automatically from OpenShift Routes; local defaults in `template.env` are for running servers on your machine.
@@ -66,7 +64,7 @@ For deploy, `CREW_A2A_PUBLIC_URL` / `LANGGRAPH_A2A_PUBLIC_URL` are set automatic
 - `API_KEY` — contact your cluster administrator or your LLM provider
 - `BASE_URL` — must include `/v1` for OpenAI-compatible chat
 - `MODEL_ID` — model id accepted by that endpoint
-- `CONTAINER_IMAGE_CREW` / `CONTAINER_IMAGE_LANGGRAPH` — full image references (different tags, e.g. `:crew` and `:langgraph`). Images are built locally, pushed to the registry, then deployed.
+- `CONTAINER_IMAGE` — one registry path, same style as other agents (e.g. ending in `:latest`). `deploy.sh` strips the tag and pushes **the same image** to two refs (**`:crew`** and **`:langgraph`**) so each Deployment keeps a distinct pull URL; the binary is identical, roles differ via **`A2A_ROLE`** in the manifest. Optionally set `CONTAINER_IMAGE_CREW` and `CONTAINER_IMAGE_LANGGRAPH` instead (e.g. two Quay repos).
 
 Create and activate a virtual environment (Python 3.12+) in this directory using [uv](https://docs.astral.sh/uv/):
 
@@ -101,13 +99,13 @@ Use **three terminals** (after `source ./init.sh` in each, or export the same va
 
 ```bash
 # Terminal 1
-uv run python crew_a2a_server.py
+uv run python -m a2a_langgraph_crewai.crew_a2a_server
 
 # Terminal 2
-uv run python langgraph_a2a_server.py
+uv run python -m a2a_langgraph_crewai.langgraph_a2a_server
 
 # Terminal 3
-uv run python demo_client.py "Your question here"
+uv run python -m a2a_langgraph_crewai.demo_client "Your question here"
 ```
 
 Default ports: **9100** (Crew), **9200** (LangGraph). Do not set `PORT` unless you mirror the container (`8080`).
@@ -141,7 +139,7 @@ source ./init.sh
 
 `./deploy.sh` will:
 
-1. Build and push **two** images (`--build-arg A2A_ROLE=crew|langgraph`)
+1. Run **`docker buildx` twice** — push to **`CONTAINER_IMAGE_CREW`**, then **`CONTAINER_IMAGE_LANGGRAPH`** (same `Dockerfile`, same layers; the second run usually hits cache)
 2. Create `Secret` `a2a-langgraph-crewai-secrets` with `API_KEY`
 3. Remove prior Deployment/Service/Route for this stack (label `app.kubernetes.io/part-of=a2a-langgraph-crewai`)
 4. Apply `Service` and `Route` for both agents
@@ -152,7 +150,7 @@ source ./init.sh
 
 ```bash
 export LANGGRAPH_A2A_PUBLIC_URL="https://$(oc get route a2a-langgraph-agent -o jsonpath='{.spec.host}')"
-uv run python demo_client.py "Test question"
+uv run python -m a2a_langgraph_crewai.demo_client "Find the 'Red Hat' encrypted string using your web search tool."
 ```
 
 ### Operational notes
@@ -181,11 +179,13 @@ uv run python demo_client.py "Test question"
 | File / directory | Description |
 |------------------|-------------|
 | `init.sh` | Load and validate `.env` (use `source ./init.sh`) |
-| `crew_a2a_server.py` | CrewAI A2A server |
-| `langgraph_a2a_server.py` | LangGraph A2A server (calls Crew) |
-| `a2a_reply.py` | A2A client helper |
-| `demo_client.py` | JSON-RPC example against the orchestrator |
-| `Dockerfile` + `entrypoint.sh` | Image with `A2A_ROLE` |
+| `src/a2a_langgraph_crewai/` | Python package |
+| `src/a2a_langgraph_crewai/crew_a2a_server.py` | CrewAI A2A server |
+| `src/a2a_langgraph_crewai/langgraph_a2a_server.py` | LangGraph A2A server (calls Crew) |
+| `src/a2a_langgraph_crewai/a2a_reply.py` | A2A client helper |
+| `src/a2a_langgraph_crewai/custom_tool.py` | Dummy Web Search tool |
+| `src/a2a_langgraph_crewai/demo_client.py` | JSON-RPC example against the orchestrator |
+| `Dockerfile` + `entrypoint.sh` | One image; `entrypoint.sh` reads `A2A_ROLE` |
 | `k8s/*.yaml` | Deployment / Service / Route |
 | `deploy.sh` | Build, push, apply (run after `source ./init.sh`) |
 

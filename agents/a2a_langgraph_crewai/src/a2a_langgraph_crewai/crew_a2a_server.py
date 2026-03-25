@@ -1,7 +1,7 @@
 """
 CrewAI agent exposed as an A2A server (JSON-RPC over HTTP via a2a-sdk).
 
-Run: uv run python crew_a2a_server.py
+Run: uv run python -m a2a_langgraph_crewai.crew_a2a_server
 OpenShift: PORT=8080 (set by platform); local default CREW_A2A_PORT=9100.
 """
 
@@ -22,6 +22,8 @@ from a2a.server.request_handlers import DefaultRequestHandler
 from a2a.server.tasks import InMemoryTaskStore
 from a2a.types import AgentCapabilities, AgentCard, AgentSkill
 from a2a.utils import new_agent_text_message
+
+from .custom_tool import DummyWebSearchTool
 
 load_dotenv()
 logging.basicConfig(level=logging.INFO)
@@ -61,10 +63,16 @@ def _run_crew(user_prompt: str) -> str:
     llm = _ensure_llm()
     specialist = Agent(
         role="Specialist",
-        goal="Answer the user's question clearly and accurately.",
-        backstory="You are a concise expert. Respond in plain text without role-playing headers.",
+        goal="Answer clearly. For questions needing web facts, use Web Search and ground your answer in its result.",
+        backstory=(
+            "You are a concise expert. Respond in plain text without role-playing headers. "
+            "When the user asks for cluster hosting, enterprise Kubernetes, or similar factual look-ups, "
+            "call Web Search once and incorporate the snippet faithfully."
+        ),
+        tools=[DummyWebSearchTool()],
         llm=llm,
         verbose=False,
+        max_iter=5,
     )
     task = Task(
         description=user_prompt,
@@ -107,9 +115,12 @@ def main() -> None:
     skill = AgentSkill(
         id="crew_specialist",
         name="CrewAI specialist",
-        description="Single-agent CrewAI crew backed by an OpenAI-compatible LLM.",
+        description="CrewAI agent with a dummy Web Search tool (custom_tool.py).",
         tags=["crewai", "text"],
-        examples=["Explain what A2A is in one paragraph."],
+        examples=[
+            "Explain what A2A is in one paragraph.",
+            "What is the best cluster hosting service?",
+        ],
     )
 
     agent_card = AgentCard(

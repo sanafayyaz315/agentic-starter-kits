@@ -1,7 +1,7 @@
 """
 LangGraph ReAct-style orchestrator exposed as A2A; delegates to the CrewAI A2A agent via tool.
 
-Run (after crew_a2a_server): uv run python langgraph_a2a_server.py
+Run (after crew): uv run python -m a2a_langgraph_crewai.langgraph_a2a_server
 OpenShift: PORT=8080; set CREW_A2A_URL to the in-cluster Service URL (e.g. http://a2a-crew-agent:8080).
 """
 
@@ -25,7 +25,7 @@ from a2a.server.tasks import InMemoryTaskStore
 from a2a.types import AgentCapabilities, AgentCard, AgentSkill
 from a2a.utils import new_agent_text_message
 
-from a2a_reply import send_a2a_text_message
+from .a2a_reply import send_a2a_text_message
 
 load_dotenv()
 logging.basicConfig(level=logging.INFO)
