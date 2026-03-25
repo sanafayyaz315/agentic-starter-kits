@@ -21,13 +21,15 @@ run-cli: ## Run interactive CLI chat (no web server)
 	  cd examples && uv run python execute_ai_service_locally.py
 
 build: ## Build container image locally (podman/docker)
-	@source .env && \
+	@[ -n "$(CONTAINER_CLI)" ] || { echo "ERROR: neither podman nor docker found in PATH"; exit 1; } && \
+	  source .env && \
 	  [ -n "$${CONTAINER_IMAGE}" ] || { echo "ERROR: CONTAINER_IMAGE is not set in .env"; exit 1; } && \
 	  cp -r ../../../images ./images && trap 'rm -rf ./images' EXIT && \
 	  $(CONTAINER_CLI) build --platform linux/amd64 -t "$${CONTAINER_IMAGE}" -f Dockerfile .
 
 push: ## Push container image to registry
-	@source .env && \
+	@[ -n "$(CONTAINER_CLI)" ] || { echo "ERROR: neither podman nor docker found in PATH"; exit 1; } && \
+	  source .env && \
 	  [ -n "$${CONTAINER_IMAGE}" ] || { echo "ERROR: CONTAINER_IMAGE is not set in .env"; exit 1; } && \
 	  $(CONTAINER_CLI) push "$${CONTAINER_IMAGE}"
 
@@ -54,6 +56,7 @@ deploy: _check-env ## Deploy to OpenShift/K8s via Helm
 	  [ -n "$${CONTAINER_IMAGE}" ] || { echo "ERROR: CONTAINER_IMAGE is not set in .env"; exit 1; } && \
 	  case "$${CONTAINER_IMAGE}" in *:*) IMAGE_REPO="$${CONTAINER_IMAGE%:*}"; IMAGE_TAG="$${CONTAINER_IMAGE##*:}";; *) IMAGE_REPO="$${CONTAINER_IMAGE}"; IMAGE_TAG="latest";; esac && \
 	  trap 'rm -f .helm-secrets.yaml' EXIT && \
+	  umask 077 && \
 	  printf 'secrets:\n  apiKey: "%s"\n' "$${API_KEY}" > .helm-secrets.yaml && \
 	  helm upgrade --install $(AGENT_NAME) $(CHART_DIR) \
 	    -f $(VALUES_FILE) \
