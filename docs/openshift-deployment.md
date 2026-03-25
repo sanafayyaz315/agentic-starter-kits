@@ -99,18 +99,7 @@ Secrets are redacted in the output.
 make deploy
 ```
 
-Under the hood this runs:
-
-```bash
-helm upgrade --install <agent-name> ../../charts/agent \
-  -f values.yaml \
-  --set secrets.apiKey="$API_KEY" \
-  --set image.repository="$CONTAINER_IMAGE" \
-  --set env.BASE_URL="$BASE_URL" \
-  --set env.MODEL_ID="$MODEL_ID"
-```
-
-If any required environment variables are missing, `make deploy` will fail with a clear error listing which variables need to be set.
+Under the hood, `make deploy` runs `helm upgrade --install` with your `.env` values, passing secrets via a temporary file that is cleaned up after deployment. If any required environment variables are missing, it will fail with a clear error listing which variables need to be set.
 
 ### 7. Verify
 

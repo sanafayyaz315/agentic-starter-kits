@@ -108,23 +108,24 @@ MLFLOW_WORKSPACE="default"
 # Option A: Build locally with Podman (or Docker) and push to a registry
 make build            # builds container image locally
 make push             # pushes image to registry
+make dry-run          # (optional) preview rendered Helm manifests
 make deploy           # deploys via Helm
 
 # Option B: Build in-cluster on OpenShift (no Podman/Docker needed)
 make build-openshift  # builds image via OpenShift BuildConfig
 # Set CONTAINER_IMAGE in .env to the internal registry path printed after the build
+make dry-run          # (optional) preview rendered Helm manifests
 make deploy
 
 # Remove deployment from cluster
 make undeploy
-
-# (Optional)Preview rendered manifests before deploying
-make dry-run
 ```
 
 See [OpenShift Deployment](../../../docs/openshift-deployment.md) for details.
 
 ### Testing on OpenShift
+
+After deploying, the application may take about a minute to become available while the pod starts up.
 
 The route URL is printed after `make deploy`. You can also retrieve it manually:
 

@@ -51,8 +51,7 @@ _check-env:
 deploy: _check-env ## Deploy to OpenShift/K8s via Helm
 	@source .env && \
 	  [ -n "$${CONTAINER_IMAGE}" ] || { echo "ERROR: CONTAINER_IMAGE is not set in .env"; exit 1; } && \
-	  IMAGE_REPO="$${CONTAINER_IMAGE%:*}" && \
-	  IMAGE_TAG="$${CONTAINER_IMAGE##*:}" && \
+	  case "$${CONTAINER_IMAGE}" in *:*) IMAGE_REPO="$${CONTAINER_IMAGE%:*}"; IMAGE_TAG="$${CONTAINER_IMAGE##*:}";; *) IMAGE_REPO="$${CONTAINER_IMAGE}"; IMAGE_TAG="latest";; esac && \
 	  trap 'rm -f .helm-secrets.yaml' EXIT && \
 	  printf 'secrets:\n  apiKey: "%s"\n' "$${API_KEY}" > .helm-secrets.yaml && \
 	  helm upgrade --install $(AGENT_NAME) $(CHART_DIR) \
@@ -63,12 +62,12 @@ deploy: _check-env ## Deploy to OpenShift/K8s via Helm
 	    --set env.BASE_URL="$${BASE_URL}" \
 	    --set env.MODEL_ID="$${MODEL_ID}" && \
 	  ROUTE=$$(oc get route $(AGENT_NAME) -o jsonpath='{.spec.host}' 2>/dev/null) && \
-	  if [ -n "$$ROUTE" ]; then echo "" && echo "Agent is available at: https://$$ROUTE"; fi
+	  if [ -n "$$ROUTE" ]; then echo "" && echo "Agent is available at: https://$$ROUTE" && echo "Note: It may take about a minute for the application to become available."; fi
 
 dry-run: _check-env ## Render Helm templates without deploying
 	@source .env && \
-	  IMAGE_REPO="$${CONTAINER_IMAGE%:*}" && \
-	  IMAGE_TAG="$${CONTAINER_IMAGE##*:}" && \
+	  [ -n "$${CONTAINER_IMAGE}" ] || { echo "ERROR: CONTAINER_IMAGE is not set in .env"; exit 1; } && \
+	  case "$${CONTAINER_IMAGE}" in *:*) IMAGE_REPO="$${CONTAINER_IMAGE%:*}"; IMAGE_TAG="$${CONTAINER_IMAGE##*:}";; *) IMAGE_REPO="$${CONTAINER_IMAGE}"; IMAGE_TAG="latest";; esac && \
 	  helm template $(AGENT_NAME) $(CHART_DIR) \
 	    -f $(VALUES_FILE) \
 	    --set secrets.apiKey="REDACTED" \

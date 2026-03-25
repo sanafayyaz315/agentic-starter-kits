@@ -62,7 +62,7 @@ MODEL_ID=llama3.2:3b
 make run
 ```
 
-The agent starts on `http://localhost:8080`.
+The agent starts on `http://localhost:8000`.
 
 ## Option B: OpenAI-Compatible API
 
@@ -78,15 +78,15 @@ MODEL_ID=gpt-4o
 
 ```bash
 # Health check
-curl http://localhost:8080/health
+curl http://localhost:8000/health
 
 # Non-streaming
-curl -X POST http://localhost:8080/chat/completions \
+curl -X POST http://localhost:8000/chat/completions \
   -H "Content-Type: application/json" \
   -d '{"messages": [{"role": "user", "content": "Hello!"}], "stream": false}'
 
 # Streaming
-curl -sN -X POST http://localhost:8080/chat/completions \
+curl -sN -X POST http://localhost:8000/chat/completions \
   -H "Content-Type: application/json" \
   -d '{"messages": [{"role": "user", "content": "Hello!"}], "stream": true}'
 ```
