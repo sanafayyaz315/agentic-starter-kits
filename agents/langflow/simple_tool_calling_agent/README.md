@@ -61,7 +61,7 @@ This starts:
 - **Langflow** on http://localhost:7860 — the agent UI
 - **PostgreSQL** — shared database server. Hosts two databases: `langflow` (flows, users, settings) and `langfuse` (metadata). The `langflow` database is created automatically by PostgreSQL; the `langfuse` database is created by `local/init-db.sh` on first startup
 - **Ollama** on http://localhost:11434 — local LLM (qwen2.5:7b), runs natively on host for GPU acceleration
-- **Langfuse v3** on http://localhost:3000 — tracing (admin@langflow.local / admin123), backed by ClickHouse, MinIO, and Redis
+- **Langfuse v3** on http://localhost:3000 — tracing (admin@langflow.local / password auto-generated in `local/.env`), backed by ClickHouse, MinIO, and Redis
 
 ### Import and configure the flow
 
@@ -210,7 +210,7 @@ Then update the **KServe vLLM** component in the Langflow UI to point to your re
 After running the agent, traces are automatically sent to Langfuse.
 
 **Locally:**
-1. Open http://localhost:3000 (login: admin@langflow.local / admin123)
+1. Open http://localhost:3000 (login: admin@langflow.local / password auto-generated in `local/.env`)
 2. Select the **Langflow Agent** project
 3. Click **Traces** in the left sidebar
 4. Click on any trace to see the full agent execution — LLM calls, tool invocations, inputs, and outputs

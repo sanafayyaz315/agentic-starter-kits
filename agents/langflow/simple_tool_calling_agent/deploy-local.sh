@@ -23,7 +23,22 @@ fi
 # Copy .env if it doesn't exist
 if [ ! -f "$LOCAL_DIR/.env" ]; then
   cp "$LOCAL_DIR/.env.example" "$LOCAL_DIR/.env"
-  echo "Created .env from .env.example — edit it if needed."
+  echo "Created .env from .env.example"
+fi
+
+# Generate Langfuse secrets if not already set
+if ! grep -q '^LANGFUSE_ADMIN_PASSWORD=.\+' "$LOCAL_DIR/.env" 2>/dev/null; then
+  GENERATED_PWD=$(openssl rand -base64 12)
+  sed -i.bak "s/^LANGFUSE_ADMIN_PASSWORD=.*/LANGFUSE_ADMIN_PASSWORD=$GENERATED_PWD/" "$LOCAL_DIR/.env"
+  rm -f "$LOCAL_DIR/.env.bak"
+  echo "Generated Langfuse admin password."
+fi
+
+if ! grep -q '^LANGFUSE_ENCRYPTION_KEY=.\+' "$LOCAL_DIR/.env" 2>/dev/null; then
+  GENERATED_KEY=$(openssl rand -hex 32)
+  sed -i.bak "s/^LANGFUSE_ENCRYPTION_KEY=.*/LANGFUSE_ENCRYPTION_KEY=$GENERATED_KEY/" "$LOCAL_DIR/.env"
+  rm -f "$LOCAL_DIR/.env.bak"
+  echo "Generated Langfuse encryption key."
 fi
 
 # Ask about Ollama on first run
@@ -123,7 +138,7 @@ echo ""
 echo "=== Local environment is ready ==="
 echo ""
 echo "  Langflow UI:  http://localhost:7860"
-echo "  Langfuse:     http://localhost:3000  (login: admin@langflow.local / admin123)"
+echo "  Langfuse:     http://localhost:3000  (login: admin@langflow.local / password auto-generated in local/.env)"
 if [ "$USE_OLLAMA" = "yes" ]; then
   echo "  Ollama API:   http://localhost:11434  (running natively on host)"
 fi
