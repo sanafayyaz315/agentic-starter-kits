@@ -14,7 +14,7 @@ init: ## Copy .env.example to .env for configuration
 
 run: ## Run agent locally with hot-reload
 	@set -a && source .env && set +a && \
-	  uv run uvicorn main:app --host 0.0.0.0 --port $${PORT:-8000} --reload
+	  uv run uvicorn main:app --host 0.0.0.0 --port $${PORT:-8000} --reload --reload-exclude .venv
 
 run-cli: ## Run interactive CLI chat (no web server)
 	@set -a && source .env && set +a && \
@@ -64,7 +64,12 @@ deploy: _check-env ## Deploy to OpenShift/K8s via Helm
 	    --set image.repository="$${IMAGE_REPO}" \
 	    --set image.tag="$${IMAGE_TAG}" \
 	    --set env.BASE_URL="$${BASE_URL}" \
-	    --set env.MODEL_ID="$${MODEL_ID}" && \
+	    --set env.MODEL_ID="$${MODEL_ID}" \
+	    $${MLFLOW_TRACKING_URI:+--set env.MLFLOW_TRACKING_URI="$${MLFLOW_TRACKING_URI}"} \
+	    $${MLFLOW_TRACKING_TOKEN:+--set env.MLFLOW_TRACKING_TOKEN="$${MLFLOW_TRACKING_TOKEN}"} \
+	    $${MLFLOW_EXPERIMENT_NAME:+--set env.MLFLOW_EXPERIMENT_NAME="$${MLFLOW_EXPERIMENT_NAME}"} \
+	    $${MLFLOW_TRACKING_INSECURE_TLS:+--set env.MLFLOW_TRACKING_INSECURE_TLS="$${MLFLOW_TRACKING_INSECURE_TLS}"} \
+	    $${MLFLOW_WORKSPACE:+--set env.MLFLOW_WORKSPACE="$${MLFLOW_WORKSPACE}"} && \
 	  if command -v oc >/dev/null 2>&1; then \
 	    ROUTE=$$(oc get route $(AGENT_NAME) -o jsonpath='{.spec.host}' 2>/dev/null || true); \
 	    if [ -n "$$ROUTE" ]; then echo "" && echo "Agent is available at: https://$$ROUTE" && echo "Note: It may take about a minute for the application to become available."; fi; \

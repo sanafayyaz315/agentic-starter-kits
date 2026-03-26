@@ -18,12 +18,11 @@ dependencies = [
 ]
 
 [project.optional-dependencies]
-local = [
-    "llama-stack>=0.5.1",
-    "milvus-lite>=2.5.1",
-]
 dev = [
     "pytest>=9.0.2",
+]
+tracing = [
+    "mlflow>=3.10.0",
 ]
 
 [tool.setuptools.packages.find]

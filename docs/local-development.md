@@ -38,9 +38,14 @@ ollama pull embeddinggemma:latest
 
 ### 3. Start Llama Stack Server
 
+From your agent directory (e.g., `agents/llamaindex/websearch_agent`):
+
 ```bash
-pip install llama-stack
-llama stack run infrastructure/llama-stack/run_llama_server.yaml
+# Install llama-stack and its provider dependencies (ollama, milvus)
+uv tool install llama-stack --with ollama --with "pymilvus[milvus-lite]>=2.4.10" --with chardet
+
+# Start the server
+llama stack run ../../../run_llama_server.yaml
 ```
 
 The server starts on `http://localhost:8321`.
