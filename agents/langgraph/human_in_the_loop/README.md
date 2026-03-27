@@ -11,8 +11,8 @@
 ## What this agent does
 
 Agent with **Human-in-the-Loop (HITL) approval** that pauses execution before running sensitive tools (e.g.
-`send_email`) and waits for human review. Safe tools (e.g. `search`) run automatically without approval. Built with
-LangGraph and LangChain.
+`create_file`) and waits for human review. Simple questions are answered directly without triggering the approval loop.
+Built with LangGraph and LangChain.
 
 **How it works:**
 
@@ -28,7 +28,7 @@ User Input → LLM decides tool → Is it sensitive?
 
 ### Preconditions:
 
-- You need to change .env.template file to .env
+- You need to change template.env file to .env
 - Decide what way you want to go `local` or `RH OpenShift Cluster` and fill needed values
 - use `./init.sh` that will add those values from .env to environment variables
 
@@ -162,10 +162,10 @@ uv run examples/execute_ai_service_locally.py
 
 This agent classifies tools into two categories:
 
-| Category      | Tools        | Behavior                                   |
-|---------------|--------------|--------------------------------------------|
-| **Safe**      | `search`     | Executed automatically, no approval needed |
-| **Sensitive** | `send_email` | Paused for human review before execution   |
+| Category      | Tools         | Behavior                                  |
+|---------------|---------------|-------------------------------------------|
+| **Safe**      | general chat  | Responded to directly, no approval needed |
+| **Sensitive** | `create_file` | Paused for human review before execution  |
 
 When the LLM decides to call a sensitive tool, the agent:
 
@@ -182,7 +182,7 @@ When the LLM decides to call a sensitive tool, the agent:
 curl -X POST http://localhost:8000/chat/completions \
   -H "Content-Type: application/json" \
   -d '{
-    "messages": [{"role": "user", "content": "Send an email to alice@example.com about the meeting tomorrow"}],
+    "messages": [{"role": "user", "content": "Create a file named report.md with info about LangChain"}],
     "stream": false,
     "thread_id": "conversation-1"
   }'
@@ -196,7 +196,7 @@ curl -X POST http://localhost:8000/chat/completions \
     {
       "message": {
         "role": "assistant",
-        "content": "{\"question\": \"Do you approve the following tool call(s)?\", \"tool_calls\": [\"Tool: send_email, Args: {...}\"], \"options\": [\"yes\", \"no\"]}"
+        "content": "{\"question\": \"Do you approve the following tool call(s)?\", \"tool_calls\": [\"Tool: create_file, Args: {...}\"], \"options\": [\"yes\", \"no\"]}"
       },
       "finish_reason": "pending_approval"
     }
@@ -299,36 +299,84 @@ COPY the route URL and PASTE into the CURL below
 oc get route langgraph-hitl-agent -o jsonpath='{.spec.host}'
 ```
 
-Send a test request:
+Send test requests (3-step HITL flow):
 
-Non-streaming (safe tool - no approval needed)
-
-```bash
-curl -X POST https://<YOUR_ROUTE_URL>/chat/completions \
-  -H "Content-Type: application/json" \
-  -d '{"messages": [{"role": "user", "content": "Search for RedHat OpenShift"}], "stream": false}'
-```
-
-Non-streaming (sensitive tool - triggers approval)
+**Step 1: Ask a general question (no approval needed)**
 
 ```bash
 curl -X POST https://<YOUR_ROUTE_URL>/chat/completions \
   -H "Content-Type: application/json" \
   -d '{
-    "messages": [{"role": "user", "content": "Send an email to alice@example.com about the meeting"}],
+    "messages": [{"role": "user", "content": "What is RedHat OpenShift Cluster"}],
     "stream": false,
-    "thread_id": "test-hitl-1"
+    "thread_id": "demo-1"
   }'
 ```
 
-Streaming
+**Step 2: Ask to write that info into a file (triggers approval)**
 
 ```bash
 curl -X POST https://<YOUR_ROUTE_URL>/chat/completions \
   -H "Content-Type: application/json" \
   -d '{
-    "messages": [{"role": "user", "content": "Search for RedHat OpenShift"}],
-    "stream": true
+    "messages": [{"role": "user", "content": "Write that information into a file called demo.md"}],
+    "stream": false,
+    "thread_id": "demo-1"
+  }'
+```
+
+The agent will pause and return `finish_reason: "pending_approval"` with the `create_file` tool call details.
+
+**Step 3: Approve the file creation**
+
+```bash
+curl -X POST https://<YOUR_ROUTE_URL>/chat/completions \
+  -H "Content-Type: application/json" \
+  -d '{
+    "messages": [{"role": "user", "content": ""}],
+    "thread_id": "demo-1",
+    "approval": "yes"
+  }'
+```
+
+The agent resumes, executes `create_file`, and returns the final result.
+
+Streaming (3-step HITL flow with `stream: true`):
+
+**Step 1: Ask a general question (no approval needed)**
+
+```bash
+curl -X POST https://langgraph-hitl-agent-tguzik-agents.apps.rosa.ai-eng-gpu.socc.p3.openshiftapps.com/chat/completions \
+  -H "Content-Type: application/json" \
+  -d '{
+    "messages": [{"role": "user", "content": "What is RedHat OpenShift Cluster"}],
+    "stream": true,
+    "thread_id": "demo-2"
+  }'
+```
+
+**Step 2: Ask to write that info into a file (triggers approval)**
+
+```bash
+curl -X POST https://<YOUR_ROUTE_URL>/chat/completions \
+  -H "Content-Type: application/json" \
+  -d '{
+    "messages": [{"role": "user", "content": "Write that information into a file called demo.md"}],
+    "stream": true,
+    "thread_id": "demo-2"
+  }'
+```
+
+**Step 3: Approve the file creation**
+
+```bash
+curl -X POST https://<YOUR_ROUTE_URL>/chat/completions \
+  -H "Content-Type: application/json" \
+  -d '{
+    "messages": [{"role": "user", "content": ""}],
+    "stream": true,
+    "thread_id": "demo-2",
+    "approval": "yes"
   }'
 ```
 
@@ -377,11 +425,15 @@ This agent extends the base LangGraph ReAct agent with:
 
 **Customization:**
 
-Edit `src/human_in_the_loop/agent.py`:
+Edit `src/human_in_the_loop/agent.py` to add more sensitive tools to the interrupt list:
 
 ```python
-# Add more sensitive tools that require approval
-SENSITIVE_TOOLS = {send_email.name, "delete_record", "transfer_funds"}
+hitl_middleware = HumanInTheLoopMiddleware(
+    interrupt_on={
+        "create_file": True,
+        "delete_record": True,
+    },
+)
 ```
 
 Edit `src/human_in_the_loop/tools.py` to add new tools:
