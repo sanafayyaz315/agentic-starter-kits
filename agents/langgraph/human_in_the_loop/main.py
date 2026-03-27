@@ -30,7 +30,7 @@ class ChatMessage(BaseModel):
     content: str = Field(
         ...,
         description="The contents of the message.",
-        examples=["Send an email to alice@example.com about the meeting."],
+        examples=["Create a file called report.md with info about LangChain"],
     )
 
 
