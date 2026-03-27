@@ -346,7 +346,7 @@ Streaming (3-step HITL flow with `stream: true`):
 **Step 1: Ask a general question (no approval needed)**
 
 ```bash
-curl -X POST https://langgraph-hitl-agent-tguzik-agents.apps.rosa.ai-eng-gpu.socc.p3.openshiftapps.com/chat/completions \
+curl -X POST https://<YOUR_ROUTE_URL>/chat/completions \
   -H "Content-Type: application/json" \
   -d '{
     "messages": [{"role": "user", "content": "What is RedHat OpenShift Cluster"}],
