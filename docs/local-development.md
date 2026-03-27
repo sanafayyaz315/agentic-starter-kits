@@ -42,7 +42,16 @@ From your agent directory (e.g., `agents/llamaindex/websearch_agent`):
 
 ```bash
 # Install llama-stack and its provider dependencies (ollama, milvus)
-uv tool install llama-stack --with ollama --with "pymilvus[milvus-lite]>=2.4.10" --with chardet
+uv tool install llama-stack \
+  --with ollama \
+  --with "pymilvus>=2.4.10" \
+  --with "milvus-lite>=2.5.1" \
+  --with chardet \
+  --with pypdf \
+  --with "setuptools<82"
+
+# Create milvus data directory (required by run_llama_server.yaml)**
+mkdir -p ../../../milvus_data
 
 # Start the server
 llama stack run ../../../run_llama_server.yaml
