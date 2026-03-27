@@ -51,7 +51,7 @@ def index():
     return render_template("index.html")
 
 
-@app.route("/api/health", methods=["GET"])
+@app.route("/health", methods=["GET"])
 def health():
     """Check if the agent is reachable."""
     try:
@@ -70,7 +70,7 @@ def health():
         )
 
 
-@app.route("/api/chat", methods=["POST"])
+@app.route("/chat/completions", methods=["POST"])
 def chat():
     """Proxy chat requests to the agent with streaming and HITL support."""
     data = request.get_json() or {}

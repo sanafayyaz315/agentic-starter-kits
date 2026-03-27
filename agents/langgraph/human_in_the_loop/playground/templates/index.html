@@ -274,7 +274,7 @@
     // Check agent health on load
     async function checkHealth() {
         try {
-            const resp = await fetch('/api/health');
+            const resp = await fetch('/health');
             const data = await resp.json();
             if (data.status === 'healthy' && data.agent_initialized) {
                 statusDot.className = 'status-dot connected';
@@ -395,11 +395,12 @@
         let textEl = null;
 
         try {
-            const response = await fetch('/api/chat', {
+            const response = await fetch('/chat/completions', {
                 method: 'POST',
                 headers: { 'Content-Type': 'application/json' },
                 body: JSON.stringify({
                     messages: [{ role: 'user', content: '' }],
+                    stream: true,
                     thread_id: currentThreadId,
                     approval: decision,
                 }),
@@ -534,7 +535,7 @@
                 thread_id: currentThreadId,
             };
 
-            const response = await fetch('/api/chat', {
+            const response = await fetch('/chat/completions', {
                 method: 'POST',
                 headers: { 'Content-Type': 'application/json' },
                 body: JSON.stringify(requestBody),
