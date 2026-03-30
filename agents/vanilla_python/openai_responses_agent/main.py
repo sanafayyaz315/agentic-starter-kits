@@ -391,6 +391,17 @@ async def health():
     return {"status": "healthy", "agent_initialized": get_agent is not None}
 
 
+# ── Playground API aliases (so the same index.html works in both modes) ───────
+@app.get("/api/health", response_model=HealthResponse, include_in_schema=False)
+async def api_health():
+    return await health()
+
+
+@app.post("/api/chat", include_in_schema=False)
+async def api_chat(request: ChatCompletionRequest):
+    return await chat_completions(request)
+
+
 # ── Playground UI ────────────────────────────────────────────────────────────
 _BASE_DIR = Path(__file__).resolve().parent
 _PLAYGROUND_HTML = _BASE_DIR / "playground" / "templates" / "index.html"
