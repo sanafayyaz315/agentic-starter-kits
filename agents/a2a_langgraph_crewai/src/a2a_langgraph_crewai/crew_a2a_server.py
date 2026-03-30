@@ -101,7 +101,7 @@ class CrewA2AExecutor(AgentExecutor):
         except Exception as e:  # noqa: BLE001
             logger.exception("Crew kickoff failed")
             await event_queue.enqueue_event(
-                new_agent_text_message(f"CrewAI error: {e!s}")
+                new_agent_text_message("CrewAI error: request failed.")
             )
 
     async def cancel(self, context: RequestContext, event_queue: EventQueue) -> None:
