@@ -1,16 +1,16 @@
 """
-Playground UI for the LlamaIndex WebSearch Agent.
+Playground UI for the LangGraph Human-in-the-Loop Agent.
 
 A simple Flask chat interface that proxies requests to the agent's
-/chat/completions endpoint with streaming support.
+/chat/completions endpoint with streaming and HITL approval support.
 
 Usage:
     # Make sure the agent is running first (default: http://localhost:8000)
-    cd agents/llamaindex/websearch_agent
-    uv run flask --app playground.app run --port 5050
+    cd agents/langgraph/human_in_the_loop
+    flask --app playground/app run --port 5001
 
     # Or with a custom agent URL:
-    AGENT_URL=http://localhost:8000 uv run flask --app playground.app run --port 5050
+    AGENT_URL=http://localhost:8000 flask --app playground/app run --port 5001
 """
 
 import json
@@ -44,7 +44,6 @@ def serve_image(filename):
 
 
 AGENT_URL = getenv("AGENT_URL", "http://localhost:8000")
-CHAT_ENDPOINT = f"{AGENT_URL}/chat/completions"
 
 
 @app.route("/")
@@ -52,7 +51,7 @@ def index():
     return render_template("index.html")
 
 
-@app.route("/api/health", methods=["GET"])
+@app.route("/health", methods=["GET"])
 def health():
     """Check if the agent is reachable."""
     try:
@@ -71,32 +70,45 @@ def health():
         )
 
 
-@app.route("/api/chat", methods=["POST"])
+@app.route("/chat/completions", methods=["POST"])
 def chat():
-    """Proxy chat requests to the agent with streaming."""
+    """Proxy chat requests to the agent with streaming and HITL support."""
     data = request.get_json() or {}
     messages = data.get("messages", [])
+    thread_id = data.get("thread_id")
+    approval = data.get("approval")
 
     payload = {
         "messages": messages,
         "stream": True,
     }
+    if thread_id:
+        payload["thread_id"] = thread_id
+    if approval:
+        payload["approval"] = approval
 
-    logger.info(f"Sending request to {AGENT_URL}/chat/completions (messages={len(payload.get('messages', []))}, stream={payload.get('stream')})")
+    logger.info(
+        "Sending request to %s/chat/completions (messages=%d, stream=%s, thread_id=%s, approval=%s)",
+        AGENT_URL,
+        len(messages),
+        payload.get("stream"),
+        thread_id,
+        approval,
+    )
 
     def generate():
         try:
             with http_requests.post(
-                CHAT_ENDPOINT,
+                f"{AGENT_URL}/chat/completions",
                 json=payload,
                 stream=True,
                 timeout=(10, 300),
             ) as resp:
-                logger.info(f"Agent response status: {resp.status_code}")
+                logger.info("Agent response status: %d", resp.status_code)
 
                 if resp.status_code != 200:
                     error_msg = resp.text[:500]
-                    logger.error(f"Agent error: {error_msg}")
+                    logger.error("Agent error: %s", error_msg)
                     error = json.dumps(
                         {
                             "error": {
@@ -109,11 +121,11 @@ def chat():
 
                 for chunk in resp.iter_content(chunk_size=None, decode_unicode=True):
                     if chunk:
-                        logger.debug(f"Chunk: {chunk[:200]}")
+                        logger.debug("Chunk: %s", chunk[:200])
                         yield chunk
 
         except http_requests.exceptions.ConnectionError:
-            logger.error(f"Cannot connect to agent at {AGENT_URL}")
+            logger.error("Cannot connect to agent at %s", AGENT_URL)
             error = json.dumps(
                 {
                     "error": {

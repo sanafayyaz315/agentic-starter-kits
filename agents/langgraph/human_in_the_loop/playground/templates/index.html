@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>LlamaIndex WebSearch Agent — Playground</title>
+    <title>LangGraph Human-in-the-Loop — Playground</title>
     <style>
         * { margin: 0; padding: 0; box-sizing: border-box; }
 
@@ -124,6 +124,62 @@
             font-variant-numeric: tabular-nums;
         }
 
+        /* Approval banner */
+        .approval-banner {
+            align-self: flex-start;
+            background: #fff8e1;
+            border: 1px solid #ffcc02;
+            border-radius: 12px;
+            padding: 16px 20px;
+            max-width: 75%;
+            box-shadow: 0 1px 3px rgba(0,0,0,0.1);
+        }
+        .approval-banner .approval-title {
+            font-weight: 600;
+            font-size: 14px;
+            margin-bottom: 8px;
+            color: #6d4c00;
+        }
+        .approval-banner .approval-detail {
+            font-size: 13px;
+            color: #333;
+            margin-bottom: 12px;
+            white-space: pre-wrap;
+            word-wrap: break-word;
+            background: #fff9e6;
+            border-radius: 8px;
+            padding: 10px 14px;
+            font-family: "SF Mono", SFMono-Regular, Menlo, Consolas, monospace;
+            line-height: 1.6;
+        }
+        .approval-banner .approval-buttons {
+            display: flex;
+            gap: 10px;
+        }
+        .approval-banner button {
+            padding: 8px 20px;
+            border: none;
+            border-radius: 8px;
+            font-size: 13px;
+            font-weight: 600;
+            cursor: pointer;
+            transition: background 0.2s;
+        }
+        .approval-banner .btn-approve {
+            background: #4caf50;
+            color: #fff;
+        }
+        .approval-banner .btn-approve:hover { background: #43a047; }
+        .approval-banner .btn-reject {
+            background: #f44336;
+            color: #fff;
+        }
+        .approval-banner .btn-reject:hover { background: #e53935; }
+        .approval-banner button:disabled {
+            opacity: 0.5;
+            cursor: not-allowed;
+        }
+
         /* Typing indicator */
         .typing-indicator {
             display: inline-flex;
@@ -190,7 +246,7 @@
 
 <div class="header">
     <div class="status-dot" id="statusDot"></div>
-    LlamaIndex WebSearch Agent — Playground
+    LangGraph Human-in-the-Loop — Playground
 </div>
 
 <div class="chat-container" id="chat">
@@ -212,11 +268,13 @@
     const statusDot = document.getElementById('statusDot');
 
     const conversationHistory = [];
+    // Generate a thread_id upfront so all messages share the same conversation thread
+    let currentThreadId = 'playground-' + crypto.randomUUID().slice(0, 12);
 
     // Check agent health on load
     async function checkHealth() {
         try {
-            const resp = await fetch('/api/health');
+            const resp = await fetch('/health');
             const data = await resp.json();
             if (data.status === 'healthy' && data.agent_initialized) {
                 statusDot.className = 'status-dot connected';
@@ -267,6 +325,163 @@
         return text;
     }
 
+    function formatApprovalDetail(raw) {
+        try {
+            const data = typeof raw === 'string' ? JSON.parse(raw) : raw;
+            const actions = data.action_requests || [];
+            if (!actions.length) return raw;
+
+            return actions.map(action => {
+                const args = action.args || {};
+                const lines = [`Tool:  ${action.name}`];
+                for (const [key, value] of Object.entries(args)) {
+                    let display = String(value);
+                    if (display.length > 200) display = display.slice(0, 200) + '…';
+                    lines.push(`${key}:  ${display}`);
+                }
+                return lines.join('\n');
+            }).join('\n\n');
+        } catch {
+            return raw;
+        }
+    }
+
+    function showApprovalBanner(detail) {
+        const banner = document.createElement('div');
+        banner.className = 'approval-banner';
+        banner.id = 'approvalBanner';
+
+        const title = document.createElement('div');
+        title.className = 'approval-title';
+        title.textContent = 'Approval Required';
+        banner.appendChild(title);
+
+        const detailDiv = document.createElement('div');
+        detailDiv.className = 'approval-detail';
+        detailDiv.textContent = formatApprovalDetail(detail);
+        banner.appendChild(detailDiv);
+
+        const buttons = document.createElement('div');
+        buttons.className = 'approval-buttons';
+
+        const approveBtn = document.createElement('button');
+        approveBtn.className = 'btn-approve';
+        approveBtn.textContent = 'Approve';
+        approveBtn.onclick = () => handleApproval('yes', banner);
+        buttons.appendChild(approveBtn);
+
+        const rejectBtn = document.createElement('button');
+        rejectBtn.className = 'btn-reject';
+        rejectBtn.textContent = 'Reject';
+        rejectBtn.onclick = () => handleApproval('no', banner);
+        buttons.appendChild(rejectBtn);
+
+        banner.appendChild(buttons);
+        chat.appendChild(banner);
+        chat.scrollTop = chat.scrollHeight;
+    }
+
+    async function handleApproval(decision, banner) {
+        // Disable buttons
+        banner.querySelectorAll('button').forEach(b => b.disabled = true);
+
+        const decisionLabel = decision === 'yes' ? 'Approved' : 'Rejected';
+        addMessage('user', `Decision: ${decisionLabel}`);
+
+        setLoading(true);
+        addTypingIndicator();
+
+        let assistantContent = '';
+        let textEl = null;
+
+        try {
+            const response = await fetch('/chat/completions', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({
+                    messages: [{ role: 'user', content: '' }],
+                    stream: true,
+                    thread_id: currentThreadId,
+                    approval: decision,
+                }),
+            });
+
+            if (!response.ok) {
+                removeTypingIndicator();
+                const errorText = await response.text();
+                addMessage('error', `HTTP ${response.status}: ${errorText}`);
+                setLoading(false);
+                return;
+            }
+
+            const reader = response.body.getReader();
+            const decoder = new TextDecoder();
+            let buffer = '';
+
+            while (true) {
+                const { done, value } = await reader.read();
+                if (done) break;
+
+                buffer += decoder.decode(value, { stream: true });
+                const parts = buffer.split('\n\n');
+                buffer = parts.pop();
+
+                for (const part of parts) {
+                    const lines = part.split('\n');
+                    for (const line of lines) {
+                        if (!line.startsWith('data: ')) continue;
+                        const payload = line.slice(6).trim();
+                        if (payload === '[DONE]') continue;
+
+                        try {
+                            const parsed = JSON.parse(payload);
+
+                            if (parsed.error) {
+                                removeTypingIndicator();
+                                addMessage('error', parsed.error.message || 'Unknown error');
+                                setLoading(false);
+                                return;
+                            }
+
+                            const delta = parsed.choices?.[0]?.delta;
+                            if (delta?.content) {
+                                if (!textEl) {
+                                    removeTypingIndicator();
+                                    textEl = addMessage('assistant', '', 'streaming');
+                                }
+                                assistantContent += delta.content;
+                                textEl.textContent = assistantContent;
+                                chat.scrollTop = chat.scrollHeight;
+                            }
+                        } catch (e) {
+                            console.warn('Failed to parse SSE line:', payload, e);
+                        }
+                    }
+                }
+            }
+
+            if (textEl) {
+                textEl.parentElement.classList.remove('streaming');
+            } else {
+                removeTypingIndicator();
+                if (!assistantContent) {
+                    addMessage('error', 'Agent returned empty response.');
+                }
+            }
+
+            if (assistantContent) {
+                conversationHistory.push({ role: 'assistant', content: assistantContent });
+            }
+
+        } catch (err) {
+            removeTypingIndicator();
+            addMessage('error', `Connection error: ${err.message}`);
+        }
+
+        setLoading(false);
+        input.focus();
+    }
+
     function addTypingIndicator() {
         const div = document.createElement('div');
         div.className = 'message assistant streaming';
@@ -310,22 +525,25 @@
 
         let assistantContent = '';
         let textEl = null;
+        let pendingApproval = false;
+        let approvalDetail = '';
 
         try {
-            console.log('Sending message:', text);
+            const requestBody = {
+                messages: conversationHistory,
+                stream: true,
+                thread_id: currentThreadId,
+            };
 
-            const response = await fetch('/api/chat', {
+            const response = await fetch('/chat/completions', {
                 method: 'POST',
                 headers: { 'Content-Type': 'application/json' },
-                body: JSON.stringify({ messages: conversationHistory, stream: true }),
+                body: JSON.stringify(requestBody),
             });
-
-            console.log('Response status:', response.status);
 
             if (!response.ok) {
                 removeTypingIndicator();
                 const errorText = await response.text();
-                console.error('HTTP error:', response.status, errorText);
                 addMessage('error', `HTTP ${response.status}: ${errorText}`);
                 setLoading(false);
                 return;
@@ -337,15 +555,9 @@
 
             while (true) {
                 const { done, value } = await reader.read();
-                if (done) {
-                    console.log('Stream done');
-                    break;
-                }
+                if (done) break;
 
-                const chunk = decoder.decode(value, { stream: true });
-                console.log('Raw chunk:', chunk);
-                buffer += chunk;
-
+                buffer += decoder.decode(value, { stream: true });
                 const parts = buffer.split('\n\n');
                 buffer = parts.pop();
 
@@ -354,16 +566,11 @@
                     for (const line of lines) {
                         if (!line.startsWith('data: ')) continue;
                         const payload = line.slice(6).trim();
-                        if (payload === '[DONE]') {
-                            console.log('Received [DONE]');
-                            continue;
-                        }
+                        if (payload === '[DONE]') continue;
 
                         try {
                             const parsed = JSON.parse(payload);
-                            console.log('Parsed SSE:', parsed);
 
-                            // Handle error responses
                             if (parsed.error) {
                                 removeTypingIndicator();
                                 addMessage('error', parsed.error.message || 'Unknown error');
@@ -371,7 +578,23 @@
                                 return;
                             }
 
-                            const delta = parsed.choices?.[0]?.delta;
+                            // Track thread_id from response
+                            if (parsed.thread_id) {
+                                currentThreadId = parsed.thread_id;
+                            }
+
+                            const choice = parsed.choices?.[0];
+                            const delta = choice?.delta;
+
+                            // Check for pending approval
+                            if (choice?.finish_reason === 'pending_approval') {
+                                pendingApproval = true;
+                                if (delta?.content) {
+                                    approvalDetail = delta.content;
+                                }
+                                continue;
+                            }
+
                             if (delta?.content) {
                                 if (!textEl) {
                                     removeTypingIndicator();
@@ -381,6 +604,21 @@
                                 textEl.textContent = assistantContent;
                                 chat.scrollTop = chat.scrollHeight;
                             }
+
+                            // Handle tool call info in delta
+                            if (delta?.tool_calls) {
+                                const toolInfo = delta.tool_calls.map(tc =>
+                                    `Tool: ${tc.function?.name || 'unknown'}, Args: ${tc.function?.arguments || '{}'}`
+                                ).join('\n');
+                                if (!textEl) {
+                                    removeTypingIndicator();
+                                    textEl = addMessage('assistant', '', 'streaming');
+                                }
+                                assistantContent += toolInfo + '\n';
+                                textEl.textContent = assistantContent;
+                                chat.scrollTop = chat.scrollHeight;
+                            }
+
                         } catch (e) {
                             console.warn('Failed to parse SSE line:', payload, e);
                         }
@@ -391,8 +629,7 @@
             // Remove streaming indicator
             if (textEl) {
                 textEl.parentElement.classList.remove('streaming');
-            } else {
-                // No content was streamed
+            } else if (!pendingApproval) {
                 removeTypingIndicator();
                 if (!assistantContent) {
                     addMessage('error', 'Agent returned empty response. Check the agent terminal for errors.');
@@ -403,8 +640,15 @@
                 conversationHistory.push({ role: 'assistant', content: assistantContent });
             }
 
+            // Show approval banner if needed
+            if (pendingApproval) {
+                removeTypingIndicator();
+                showApprovalBanner(approvalDetail || 'The agent wants to execute a tool call. Do you approve?');
+                setLoading(false);
+                return;
+            }
+
         } catch (err) {
-            console.error('Fetch error:', err);
             removeTypingIndicator();
             addMessage('error', `Connection error: ${err.message}`);
         }
