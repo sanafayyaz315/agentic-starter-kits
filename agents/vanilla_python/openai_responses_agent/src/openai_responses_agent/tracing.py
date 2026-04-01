@@ -109,11 +109,17 @@ def enable_tracing() -> None:
         return
 
     # Server is reachable → enable tracing
-    mlflow.set_tracking_uri(tracking_uri)
-    experiment_name: str = getenv("MLFLOW_EXPERIMENT_NAME", "default-agent-experiment")
-    mlflow.set_experiment(experiment_name)
-    mlflow.config.enable_async_logging()
+    try:
+        mlflow.set_tracking_uri(tracking_uri)
+        experiment_name: str = getenv("MLFLOW_EXPERIMENT_NAME", "default-agent-experiment")
+        mlflow.set_experiment(experiment_name)
+        mlflow.config.enable_async_logging()
 
-    mlflow.openai.autolog()
+        mlflow.openai.autolog()
 
-    logger.info(f"[Tracing Enabled] MLflow -> {tracking_uri}, Experiment: {experiment_name}")
+        logger.info(f"[Tracing Enabled] MLflow -> {tracking_uri}, Experiment: {experiment_name}")
+    except Exception as e:
+        logger.warning(
+            f"[Tracing] Failed to configure MLflow tracing at {tracking_uri}. "
+            f"Continuing without tracing. Error: {e}"
+        )

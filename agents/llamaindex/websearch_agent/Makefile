@@ -14,11 +14,11 @@ init: ## Copy .env.example to .env for configuration
 
 run: ## Run agent locally with hot-reload
 	@set -a && source .env && set +a && \
-	  uv run uvicorn main:app --host 0.0.0.0 --port $${PORT:-8000} --reload --reload-exclude .venv
+	  uv run $${MLFLOW_TRACKING_URI:+--extra tracing} uvicorn main:app --host 0.0.0.0 --port $${PORT:-8000} --reload --reload-exclude .venv
 
 run-cli: ## Run interactive CLI chat (no web server)
 	@set -a && source .env && set +a && \
-	  cd examples && uv run python execute_ai_service_locally.py
+	  cd examples && uv run $${MLFLOW_TRACKING_URI:+--extra tracing} python execute_ai_service_locally.py
 
 build: ## Build container image locally (podman/docker)
 	@[ -n "$(CONTAINER_CLI)" ] || { echo "ERROR: neither podman nor docker found in PATH"; exit 1; } && \

@@ -26,135 +26,251 @@ User Input → LLM decides tool → Is it sensitive?
 
 ---
 
-### Preconditions:
+## Prerequisites
 
-- You need to change template.env file to .env
-- Decide what way you want to go `local` or `RH OpenShift Cluster` and fill needed values
-- use `./init.sh` that will add those values from .env to environment variables
+- [uv](https://docs.astral.sh/uv/) — Python package manager
+- [Podman](https://podman.io/) or [Docker](https://www.docker.com/) — for local container builds (Option A)
+- [oc](https://docs.openshift.com/container-platform/latest/cli_reference/openshift_cli/getting-started-cli.html) — for OpenShift deployment
+- [Helm](https://helm.sh/) — for deploying to Kubernetes/OpenShift
+- [GNU Make](https://www.gnu.org/software/make/) and a bash-compatible shell — on Windows, use [WSL](https://learn.microsoft.com/en-us/windows/wsl/install) (recommended) or [Git Bash](https://git-scm.com/downloads)
 
-Go to agent dir
+## Deploying Locally
+
+### Setup
 
 ```bash
 cd agents/langgraph/human_in_the_loop
+make init        # creates .env from .env.example
 ```
 
-Change the name of .env file
+### Configuration
+
+#### Pointing to a locally hosted model
+
+```ini
+API_KEY=not-needed
+BASE_URL=http://localhost:8321/v1
+MODEL_ID=ollama/llama3.2:3b
+```
+
+See [Local Development](../../../docs/local-development.md) for Ollama + Llama Stack setup for local model serving.
+
+#### Pointing to a remotely hosted model
+
+```ini
+API_KEY=your-api-key-here
+BASE_URL=https://your-model-endpoint.com/v1
+MODEL_ID=llama-3.1-8b-instruct
+```
+
+**Notes:**
+
+- `API_KEY` - your API key or contact your cluster administrator
+- `BASE_URL` - should end with `/v1`
+- `MODEL_ID` - model identifier available on your endpoint
+
+### Running the Agent
+
+#### Web Playground (`make run`)
 
 ```bash
-mv template.env .env
+make run
 ```
 
-#### Local
+Open [http://localhost:8000](http://localhost:8000) in your browser. A green dot in the header means the agent is connected and ready.
 
-Edit the `.env` file with your local configuration:
+When the agent pauses for approval, an **Approve / Reject** banner appears directly in the chat.
 
+#### Interactive CLI (`make run-cli`)
+
+For terminal-based testing without a browser:
+
+```bash
+make run-cli
 ```
-BASE_URL=http://localhost:8321
-MODEL_ID=ollama/llama3.2:3b
-API_KEY=not-needed
-CONTAINER_IMAGE=not-needed
+
+This launches an interactive prompt where you can pick predefined questions or type your own. Tool calls and results are displayed inline with colored output.
+
+#### Standalone Flask Playground (alternative)
+
+You can also run the playground as a separate Flask app that proxies to the agent:
+
+```bash
+# Terminal 1: Start the agent
+make run
+
+# Terminal 2: Open in the same directory as Terminal 1
+uv run flask --app playground.app run --port 5050
 ```
 
-#### OpenShift Cluster
+| Variable    | Default                  | Description                     |
+|-------------|--------------------------|---------------------------------|
+| `AGENT_URL` | `http://localhost:8000`  | URL of the running agent API    |
 
-Edit the `.env` file and fill in all required values:
+If the agent runs on a different host or port:
 
+```bash
+AGENT_URL=https://your-agent-url uv run flask --app playground.app run --port 5050
 ```
+
+## Deploying to OpenShift
+
+### Setup
+
+```bash
+cd agents/langgraph/human_in_the_loop
+make init        # creates .env from .env.example
+```
+
+### Configuration
+
+Edit `.env` with your model endpoint and container image:
+
+```ini
 API_KEY=your-api-key-here
-BASE_URL=https://your-llama-stack-distribution.com/v1
+BASE_URL=https://your-model-endpoint.com/v1
 MODEL_ID=llama-3.1-8b-instruct
 CONTAINER_IMAGE=quay.io/your-username/langgraph-hitl-agent:latest
 ```
 
 **Notes:**
 
-- `API_KEY` - contact your cluster administrator
+- `API_KEY` - your API key or contact your cluster administrator
 - `BASE_URL` - should end with `/v1`
-- `MODEL_ID` - contact your cluster administrator
-- `CONTAINER_IMAGE` - full image path where the agent container will be pushed and pulled from.
-  The image is built locally, pushed to this registry, and then deployed to OpenShift.
+- `MODEL_ID` - model identifier available on your endpoint
+- `CONTAINER_IMAGE` – full image path where the agent container will be pushed and pulled from. The image is built
+  locally, pushed to this registry, and then deployed to OpenShift.
 
   Format: `<registry>/<namespace>/<image-name>:<tag>`
 
   Examples:
+
     - Quay.io: `quay.io/your-username/langgraph-hitl-agent:latest`
     - Docker Hub: `docker.io/your-username/langgraph-hitl-agent:latest`
     - GHCR: `ghcr.io/your-org/langgraph-hitl-agent:latest`
 
-Create and activate a virtual environment (Python 3.12) in this directory using [uv](https://docs.astral.sh/uv/):
+### Building the Container Image
+
+#### Option A: Build locally and push to a registry
+
+Requires Podman (or Docker) and a registry account (e.g., Quay.io).
 
 ```bash
-uv venv --python 3.12
-source .venv/bin/activate
+make build    # builds the image locally
+make push     # pushes to the registry specified in CONTAINER_IMAGE
 ```
 
-(On Windows: `.venv\Scripts\activate`)
+#### Option B: Build in-cluster via OpenShift BuildConfig
 
-Make scripts executable
+No Podman, Docker, or registry account needed — just the `oc` CLI.
 
 ```bash
-chmod +x init.sh
+make build-openshift
 ```
 
-Add to values from .env to environment variables
+After the build completes, set `CONTAINER_IMAGE` in your `.env` to the internal registry URL printed after the build.
+
+### Deploying
+
+#### Preview manifests (`make dry-run`)
 
 ```bash
-source ./init.sh
+make dry-run          # preview rendered Helm manifests (secrets redacted)
 ```
 
----
-
-## Local usage (Ollama + LlamaStack Server)
-
-Create package with agent and install it to venv
+#### Deploy (`make deploy`)
 
 ```bash
-uv pip install -e .
+make deploy
 ```
+
+#### Verify deployment
+
+After deploying, the application may take about a minute to become available while the pod starts up.
+
+The route URL is printed after `make deploy`. You can also retrieve it manually:
 
 ```bash
-uv pip install ollama
+oc get route langgraph-hitl-agent -o jsonpath='{.spec.host}'
 ```
 
-Install app from Ollama site or via Brew
+#### Remove deployment (`make undeploy`)
 
 ```bash
-#brew install ollama
-# or
-curl -fsSL https://ollama.com/install.sh | sh
+make undeploy
 ```
 
-Pull Required Model
+See [OpenShift Deployment](../../../docs/openshift-deployment.md) for more details.
+
+### Testing on OpenShift
+
+Replace `http://localhost:8000` with `https://<YOUR_ROUTE_URL>` in the examples below.
+
+**Step 1: Ask a general question (no approval needed)**
 
 ```bash
-ollama pull llama3.2:3b
+curl -X POST https://<YOUR_ROUTE_URL>/chat/completions \
+  -H "Content-Type: application/json" \
+  -d '{
+    "messages": [{"role": "user", "content": "What is RedHat OpenShift Cluster"}],
+    "stream": false,
+    "thread_id": "demo-1"
+  }'
 ```
 
-Start Ollama Service
+**Step 2: Ask to write that info into a file (triggers approval)**
 
 ```bash
-ollama serve
+curl -X POST https://<YOUR_ROUTE_URL>/chat/completions \
+  -H "Content-Type: application/json" \
+  -d '{
+    "messages": [{"role": "user", "content": "Write that information into a file called demo.md"}],
+    "stream": false,
+    "thread_id": "demo-1"
+  }'
 ```
 
-> **Keep this terminal open!**\
-> Ollama needs to keep running.
+The agent will pause and return `finish_reason: "pending_approval"` with the `create_file` tool call details.
 
-Start LlamaStack Server
+**Step 3: Approve the file creation**
 
 ```bash
-llama stack run ../../../run_llama_server.yaml
+curl -X POST https://<YOUR_ROUTE_URL>/chat/completions \
+  -H "Content-Type: application/json" \
+  -d '{
+    "messages": [{"role": "user", "content": ""}],
+    "thread_id": "demo-1",
+    "approval": "yes"
+  }'
 ```
 
-> **Keep this terminal open** - the server needs to keep running.\
-> You should see output indicating the server started on `http://localhost:8321`.
+The agent resumes, executes `create_file`, and returns the final result.
 
-Run the example:
+## API Endpoints
+
+### POST /chat/completions
+
+Non-streaming:
 
 ```bash
-uv run examples/execute_ai_service_locally.py
+curl -X POST http://localhost:8000/chat/completions \
+  -H "Content-Type: application/json" \
+  -d '{"messages": [{"role": "user", "content": "What is RedHat OpenShift?"}], "stream": false, "thread_id": "demo-1"}'
 ```
 
----
+Streaming:
+
+```bash
+curl -sN -X POST http://localhost:8000/chat/completions \
+  -H "Content-Type: application/json" \
+  -d '{"messages": [{"role": "user", "content": "What is RedHat OpenShift?"}], "stream": true, "thread_id": "demo-1"}'
+```
+
+### GET /health
+
+```bash
+curl http://localhost:8000/health
+```
 
 ## Human-in-the-Loop Features
 
@@ -236,201 +352,27 @@ Each conversation requires a `thread_id` for HITL to work:
 - State is stored in-memory using LangGraph's `MemorySaver` checkpointer
 - State does not persist across server restarts (use a database checkpointer for production)
 
----
+### Customization
 
-## OpenAI SDK for Llama-stack Connectivity
+Edit `src/human_in_the_loop/agent.py` to add more sensitive tools to the interrupt list:
 
-This agent uses the **OpenAI SDK** (via LangChain's `ChatOpenAI`) to connect to Llama-stack or any OpenAI-compatible
-endpoint:
-
-- **`base_url`**: Points to Llama-stack server endpoint (e.g., `http://localhost:8321/v1`)
-- **`model`**: Uses Llama-stack's model identifier (e.g., `ollama/llama3.2:3b`)
-- **`api_key`**: Can be "not-needed" for local Llama-stack, required for remote OpenAI
-
-The OpenAI-compatible API allows **switching between providers** without code changes:
-just update `BASE_URL`, `MODEL_ID`, and `API_KEY` in your `.env` file.
-
-### Supported Providers:
-
-- **Local**: Ollama via Llama-stack (`http://localhost:8321/v1`)
-- **OpenAI**: OpenAI API (`https://api.openai.com/v1`)
-- **Azure OpenAI**: Azure endpoints
-- **vLLM**: Self-hosted vLLM servers
-- **Any OpenAI-compatible API**
-
----
-
-## Deployment on RedHat OpenShift Cluster
-
-Login to OC
-
-```bash
-oc login -u "login" -p "password" https://super-link-to-cluster:111
+```python
+hitl_middleware = HumanInTheLoopMiddleware(
+    interrupt_on={
+        "create_file": True,
+        "delete_record": True,
+    },
+)
 ```
 
-Login ex. Docker
+Edit `src/human_in_the_loop/tools.py` to add new tools:
 
-```bash
-docker login -u='login' -p='password' quay.io
+```python
+@tool("delete_record", parse_docstring=True)
+def delete_record(record_id: str) -> str:
+    """Delete a record from the database. Requires human approval."""
+    # Implementation here
 ```
-
-Make deploy file executable
-
-```bash
-chmod +x deploy.sh
-```
-
-Build image and deploy Agent
-
-```bash
-./deploy.sh
-```
-
-This will:
-
-- Create Kubernetes secret for API key
-- Build and push the Docker image
-- Deploy the agent to OpenShift
-- Create Service and Route
-
-COPY the route URL and PASTE into the CURL below
-
-```bash
-oc get route langgraph-hitl-agent -o jsonpath='{.spec.host}'
-```
-
-Send test requests (3-step HITL flow):
-
-**Step 1: Ask a general question (no approval needed)**
-
-```bash
-curl -X POST https://<YOUR_ROUTE_URL>/chat/completions \
-  -H "Content-Type: application/json" \
-  -d '{
-    "messages": [{"role": "user", "content": "What is RedHat OpenShift Cluster"}],
-    "stream": false,
-    "thread_id": "demo-1"
-  }'
-```
-
-**Step 2: Ask to write that info into a file (triggers approval)**
-
-```bash
-curl -X POST https://<YOUR_ROUTE_URL>/chat/completions \
-  -H "Content-Type: application/json" \
-  -d '{
-    "messages": [{"role": "user", "content": "Write that information into a file called demo.md"}],
-    "stream": false,
-    "thread_id": "demo-1"
-  }'
-```
-
-The agent will pause and return `finish_reason: "pending_approval"` with the `create_file` tool call details.
-
-**Step 3: Approve the file creation**
-
-```bash
-curl -X POST https://<YOUR_ROUTE_URL>/chat/completions \
-  -H "Content-Type: application/json" \
-  -d '{
-    "messages": [{"role": "user", "content": ""}],
-    "thread_id": "demo-1",
-    "approval": "yes"
-  }'
-```
-
-The agent resumes, executes `create_file`, and returns the final result.
-
-Streaming (3-step HITL flow with `stream: true`):
-
-**Step 1: Ask a general question (no approval needed)**
-
-```bash
-curl -X POST https://<YOUR_ROUTE_URL>/chat/completions \
-  -H "Content-Type: application/json" \
-  -d '{
-    "messages": [{"role": "user", "content": "What is RedHat OpenShift Cluster"}],
-    "stream": true,
-    "thread_id": "demo-2"
-  }'
-```
-
-**Step 2: Ask to write that info into a file (triggers approval)**
-
-```bash
-curl -X POST https://<YOUR_ROUTE_URL>/chat/completions \
-  -H "Content-Type: application/json" \
-  -d '{
-    "messages": [{"role": "user", "content": "Write that information into a file called demo.md"}],
-    "stream": true,
-    "thread_id": "demo-2"
-  }'
-```
-
-**Step 3: Approve the file creation**
-
-```bash
-curl -X POST https://<YOUR_ROUTE_URL>/chat/completions \
-  -H "Content-Type: application/json" \
-  -d '{
-    "messages": [{"role": "user", "content": ""}],
-    "stream": true,
-    "thread_id": "demo-2",
-    "approval": "yes"
-  }'
-```
-
----
-
-## Playground UI
-
-A browser-based chat interface with built-in Human-in-the-Loop approval support. When the agent pauses for approval, an
-**Approve / Reject** banner appears directly in the chat.
-
-### Running the Playground
-
-Start the agent and the playground in two terminals:
-
-Agent:
-
-```bash
-cd agents/langgraph/human_in_the_loop
-source .venv/bin/activate
-source ./init.sh
-lsof -ti:8000 | xargs kill -9 2>/dev/null
-uvicorn main:app --port 8000
-```
-
-UI App:
-
-```bash
-cd agents/langgraph/human_in_the_loop
-source .venv/bin/activate
-source ./init.sh
-lsof -ti:5001 | xargs kill -9 2>/dev/null
-flask --app playground/app run --port 5001
-```
-
-Open [http://localhost:5001](http://localhost:5001) in your browser.
-
-A green dot in the header means the agent is connected and ready. Type a message and press **Enter** to send.
-
-When the agent wants to call a sensitive tool (e.g. `create_file`), an approval banner will appear with **Approve** and
-**Reject** buttons. Click one to resume the agent.
-
-| Variable    | Default                 | Description                  |
-|-------------|-------------------------|------------------------------|
-| `AGENT_URL` | `http://localhost:8000` | URL of the running agent API |
-
-If the agent runs on a different host or port:
-
-```bash
-AGENT_URL=https://your-agent-url flask --app playground/app run --port 5001
-```
-
----
-
-## Agent-Specific Documentation
 
 ### Architecture
 
@@ -460,39 +402,6 @@ This agent extends the base LangGraph ReAct agent with:
 4. **Thread-Based State**: Checkpointer preserves graph state across approval requests
 5. **Custom Routing**: Conditional edges route to approval node only for sensitive tools
 
-### Configuration
-
-**Environment Variables:**
-
-| Variable          | Description        | Example                                    |
-|-------------------|--------------------|--------------------------------------------|
-| `BASE_URL`        | LLM API endpoint   | `http://localhost:8321/v1`                 |
-| `MODEL_ID`        | Model identifier   | `ollama/llama3.2:3b`                       |
-| `API_KEY`         | API authentication | `not-needed` (local) or API key            |
-| `CONTAINER_IMAGE` | Container registry | `quay.io/user/langgraph-hitl-agent:latest` |
-
-**Customization:**
-
-Edit `src/human_in_the_loop/agent.py` to add more sensitive tools to the interrupt list:
-
-```python
-hitl_middleware = HumanInTheLoopMiddleware(
-    interrupt_on={
-        "create_file": True,
-        "delete_record": True,
-    },
-)
-```
-
-Edit `src/human_in_the_loop/tools.py` to add new tools:
-
-```python
-@tool("delete_record", parse_docstring=True)
-def delete_record(record_id: str) -> str:
-    """Delete a record from the database. Requires human approval."""
-    # Implementation here
-```
-
 ### Troubleshooting
 
 **Error: "No user message found in messages list"**
@@ -509,16 +418,16 @@ def delete_record(record_id: str) -> str:
 - The default `MemorySaver` is in-memory only
 - For production, use `PostgresSaver` (see `react_with_database_memory` agent for reference)
 
-### Additional Resources
+## Tests
 
-- **LangGraph Interrupts**: https://langchain-ai.github.io/langgraph/concepts/human_in_the_loop/
-- **LangGraph Documentation**: https://langchain-ai.github.io/langgraph/
-- **LangChain Documentation**: https://python.langchain.com/
-- **Llama Stack Documentation**: https://llama-stack.readthedocs.io/
-- **Ollama Documentation**: https://ollama.com/docs
+```bash
+make test
+```
 
----
+## Resources
 
-## License
-
-MIT License
+- [LangGraph Interrupts](https://langchain-ai.github.io/langgraph/concepts/human_in_the_loop/)
+- [LangGraph Documentation](https://langchain-ai.github.io/langgraph/)
+- [LangChain Documentation](https://python.langchain.com/)
+- [Llama Stack Documentation](https://llama-stack.readthedocs.io/)
+- [Ollama Documentation](https://ollama.com/docs)

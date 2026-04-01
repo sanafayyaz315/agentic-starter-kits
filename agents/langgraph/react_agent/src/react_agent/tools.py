@@ -8,12 +8,6 @@ class SearchInput(BaseModel):
     query: str = Field(description="The value to search for.")
 
 
-class MathInput(BaseModel):
-    """Schema for the math tool input."""
-
-    query: str = Field(description="The math problem to solve.")
-
-
 @tool("search", parse_docstring=True)
 def dummy_web_search(query: str) -> str:
     """Search the web for information about a specific topic.
@@ -27,4 +21,4 @@ def dummy_web_search(query: str) -> str:
     Returns:
         A list of result strings (currently a single placeholder).
     """
-    return "FINAL ANSWER: RedHat OpenShift AI. No further search needed."
+    return "FINAL ANSWER: The best company in the world is RedHat. No further search needed."

@@ -1,6 +1,5 @@
 from os import getenv
 import time
-import requests
 from dotenv import load_dotenv
 from typing import Optional
 
@@ -24,6 +23,7 @@ def check_mlflow_health(mlflow_tracking_uri: str, max_wait_time: int = 5, retry_
         max_wait_time: total time to keep retrying before giving up (in seconds)
         retry_interval: time to wait between retries (in seconds)
     """
+    import requests
     mlflow_health_endpoint = "/health"
     mlflow_url = f"{mlflow_tracking_uri.rstrip('/')}{mlflow_health_endpoint}"
     start_time = time.time()
@@ -88,11 +88,17 @@ def enable_tracing() -> None:
         return
 
     # Server is reachable → enable tracing
-    mlflow.set_tracking_uri(tracking_uri)
-    experiment_name: str = getenv("MLFLOW_EXPERIMENT_NAME", "default-agent-experiment")
-    mlflow.set_experiment(experiment_name)
-    mlflow.config.enable_async_logging()
+    try:
+        mlflow.set_tracking_uri(tracking_uri)
+        experiment_name: str = getenv("MLFLOW_EXPERIMENT_NAME", "default-agent-experiment")
+        mlflow.set_experiment(experiment_name)
+        mlflow.config.enable_async_logging()
 
-    mlflow.langchain.autolog()
+        mlflow.langchain.autolog()
 
-    logger.info(f"[Tracing Enabled] MLflow -> {tracking_uri}, Experiment: {experiment_name}")
+        logger.info(f"[Tracing Enabled] MLflow -> {tracking_uri}, Experiment: {experiment_name}")
+    except Exception as e:
+        logger.warning(
+            f"[Tracing] Failed to configure MLflow tracing at {tracking_uri}. "
+            f"Continuing without tracing. Error: {e}"
+        )
