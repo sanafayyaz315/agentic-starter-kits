@@ -260,7 +260,7 @@ This agent combines three key components:
 2. **LiteLLM Model Connector**: Routes LLM calls to any OpenAI-compatible API (LlamaStack)
 3. **InMemoryRunner**: Handles session management and agent execution
 
-```
+```text
 User Input -> ADK LlmAgent -> LiteLLM -> LlamaStack (OpenAI API)
                  |                           |
                  v                           v
