@@ -27,7 +27,7 @@ An **A2A (Agent-to-Agent)** example: a **CrewAI** pod exposes an A2A JSON-RPC se
 ### Setup
 
 ```bash
-cd agents/a2a_langgraph_crewai
+cd agents/a2a/langgraph_crewai_agent
 make init        # creates .env from template.env if missing
 ```
 
@@ -58,7 +58,7 @@ CREW_A2A_PORT=9100
 LANGGRAPH_A2A_PORT=9200
 ```
 
-See [Local Development](../../docs/local-development.md) for Ollama + Llama Stack setup for local model serving.
+See [Local Development](../../../docs/local-development.md) for Ollama + Llama Stack setup for local model serving.
 
 #### OpenShift Cluster (values for later `make build` / `make deploy`)
 
@@ -115,7 +115,7 @@ Uses the same pattern as other agents in this repo: **[Helm](https://helm.sh/)**
 ### Setup
 
 ```bash
-cd agents/a2a_langgraph_crewai
+cd agents/a2a/langgraph_crewai_agent
 make init        # creates .env from template.env if missing
 ```
 
@@ -206,7 +206,7 @@ oc get route a2a-langgraph-agent -o jsonpath='{.spec.host}'
 make undeploy
 ```
 
-See [OpenShift Deployment](../../docs/openshift-deployment.md) for more details.
+See [OpenShift Deployment](../../../docs/openshift-deployment.md) for more details.
 
 ### API examples (LangGraph route)
 
@@ -257,6 +257,6 @@ DEBUG) and read **`oc logs`** for the orchestrator Deployment.
 ## Resources
 
 - [A2A Python SDK](https://pypi.org/project/a2a-sdk/)
-- [Deploying to OpenShift (generic)](../../docs/openshift-deployment.md)
-- [Local Development](../../docs/local-development.md)
+- [Deploying to OpenShift (generic)](../../../docs/openshift-deployment.md)
+- [Local Development](../../../docs/local-development.md)
 - Related patterns: `agents/llamaindex/websearch_agent/` (Helm + Makefile), `agents/crewai/websearch_agent/`, `agents/langgraph/react_agent/`
