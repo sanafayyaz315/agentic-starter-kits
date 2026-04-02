@@ -14,7 +14,7 @@ init: ## Copy .env.example to .env for configuration
 
 run: ## Run agent locally with hot-reload
 	@set -a && source .env && set +a && \
-	  uv run $${MLFLOW_TRACKING_URI:+--extra tracing} uvicorn main:app --host 0.0.0.0 --port $${PORT:-8000} --reload --reload-exclude .venv
+	  uv run $${MLFLOW_TRACKING_URI:+--extra tracing} uvicorn main:app --host 127.0.0.1 --port $${PORT:-8000} --reload --reload-exclude .venv
 
 run-cli: ## Run interactive CLI chat (no web server)
 	@set -a && source .env && set +a && \
@@ -54,7 +54,7 @@ _check-env:
 deploy: _check-env ## Deploy to OpenShift/K8s via Helm
 	@source .env && \
 	  [ -n "$${CONTAINER_IMAGE}" ] || { echo "ERROR: CONTAINER_IMAGE is not set in .env"; exit 1; } && \
-	  case "$${CONTAINER_IMAGE}" in *:*) IMAGE_REPO="$${CONTAINER_IMAGE%:*}"; IMAGE_TAG="$${CONTAINER_IMAGE##*:}";; *) IMAGE_REPO="$${CONTAINER_IMAGE}"; IMAGE_TAG="latest";; esac && \
+	  LAST_SEG="$${CONTAINER_IMAGE##*/}" && if [[ "$$LAST_SEG" == *:* ]]; then IMAGE_REPO="$${CONTAINER_IMAGE%:*}"; IMAGE_TAG="$${LAST_SEG##*:}"; else IMAGE_REPO="$${CONTAINER_IMAGE}"; IMAGE_TAG="latest"; fi && \
 	  trap 'rm -f .helm-secrets.yaml' EXIT && \
 	  umask 077 && \
 	  { printf 'secrets:\n  apiKey: "%s"\n' "$${API_KEY}"; \
@@ -86,7 +86,7 @@ deploy: _check-env ## Deploy to OpenShift/K8s via Helm
 dry-run: _check-env ## Render Helm templates without deploying
 	@source .env && \
 	  [ -n "$${CONTAINER_IMAGE}" ] || { echo "ERROR: CONTAINER_IMAGE is not set in .env"; exit 1; } && \
-	  case "$${CONTAINER_IMAGE}" in *:*) IMAGE_REPO="$${CONTAINER_IMAGE%:*}"; IMAGE_TAG="$${CONTAINER_IMAGE##*:}";; *) IMAGE_REPO="$${CONTAINER_IMAGE}"; IMAGE_TAG="latest";; esac && \
+	  LAST_SEG="$${CONTAINER_IMAGE##*/}" && if [[ "$$LAST_SEG" == *:* ]]; then IMAGE_REPO="$${CONTAINER_IMAGE%:*}"; IMAGE_TAG="$${LAST_SEG##*:}"; else IMAGE_REPO="$${CONTAINER_IMAGE}"; IMAGE_TAG="latest"; fi && \
 	  helm template $(AGENT_NAME) $(CHART_DIR) \
 	    -f $(VALUES_FILE) \
 	    --set secrets.apiKey="REDACTED" \

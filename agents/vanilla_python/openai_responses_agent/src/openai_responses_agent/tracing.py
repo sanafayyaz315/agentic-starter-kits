@@ -90,9 +90,6 @@ def enable_tracing() -> None:
         logger.info("[Tracing] MLFLOW_TRACKING_URI not set. Tracing is disabled.")
         return
 
-    import mlflow
-    import mlflow.openai
-
     # Check if server is reachable
     try:
         try:
@@ -110,6 +107,9 @@ def enable_tracing() -> None:
 
     # Server is reachable → enable tracing
     try:
+        import mlflow
+        import mlflow.openai
+
         mlflow.set_tracking_uri(tracking_uri)
         experiment_name: str = getenv("MLFLOW_EXPERIMENT_NAME", "default-agent-experiment")
         mlflow.set_experiment(experiment_name)
@@ -118,6 +118,10 @@ def enable_tracing() -> None:
         mlflow.openai.autolog()
 
         logger.info(f"[Tracing Enabled] MLflow -> {tracking_uri}, Experiment: {experiment_name}")
+    except ModuleNotFoundError:
+        logger.warning(
+            "[Tracing] MLflow not installed. Skipping tracing."
+        )
     except Exception as e:
         logger.warning(
             f"[Tracing] Failed to configure MLflow tracing at {tracking_uri}. "
