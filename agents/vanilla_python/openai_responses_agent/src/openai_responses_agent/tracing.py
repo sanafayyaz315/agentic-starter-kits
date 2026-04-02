@@ -5,6 +5,8 @@ from typing import Callable, Literal, Optional
 
 import logging
 
+_TRACING_ENABLED: bool = False
+
 logger = logging.getLogger("tracing")
 logger.setLevel(logging.INFO)
 if not logger.handlers:
@@ -59,15 +61,11 @@ def wrap_func_with_mlflow_trace(func: Callable, span_type: Literal["tool", "agen
 
     Returns the original function if MLflow is not installed or tracing is disabled.
     """
-    tracking_uri: Optional[str] = getenv("MLFLOW_TRACKING_URI")
-    if not tracking_uri:
+    if not _TRACING_ENABLED:
         return func
 
-    try:
-        import mlflow
-        from mlflow.entities import SpanType
-    except ModuleNotFoundError:
-        return func
+    import mlflow
+    from mlflow.entities import SpanType
 
     if span_type == "tool":
         return mlflow.trace(span_type=SpanType.TOOL)(func)
@@ -77,6 +75,7 @@ def wrap_func_with_mlflow_trace(func: Callable, span_type: Literal["tool", "agen
         raise ValueError(f"Unsupported trace type: {span_type}")
 
 def enable_tracing() -> None:
+    global _TRACING_ENABLED
     """
     Enable MLflow tracing if MLFLOW_TRACKING_URI is set.
 
@@ -120,6 +119,7 @@ def enable_tracing() -> None:
 
         mlflow.openai.autolog()
 
+        _TRACING_ENABLED = True
         logger.info(f"[Tracing Enabled] MLflow -> {tracking_uri}, Experiment: {experiment_name}")
     except ModuleNotFoundError:
         logger.warning(
