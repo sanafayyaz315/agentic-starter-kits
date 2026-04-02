@@ -148,6 +148,9 @@ AGENT_URL=https://your-agent-url uv run flask --app playground.app run --port 50
 
 ## Deploying to OpenShift
 
+> **Before you begin:** Log in to OpenShift (`oc login`) and, if using local build + push, your container registry (`podman login`).
+> See [OpenShift Deployment](../../../docs/openshift-deployment.md) for full prerequisites and step-by-step instructions.
+
 ### Setup
 
 ```bash
@@ -234,8 +237,6 @@ oc get route llamaindex-websearch-agent -o jsonpath='{.spec.host}'
 ```bash
 make undeploy
 ```
-
-See [OpenShift Deployment](../../../docs/openshift-deployment.md) for more details.
 
 ## API Endpoints
 

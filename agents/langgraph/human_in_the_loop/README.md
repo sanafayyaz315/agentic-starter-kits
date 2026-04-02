@@ -115,6 +115,9 @@ AGENT_URL=https://your-agent-url uv run flask --app playground.app run --port 50
 
 ## Deploying to OpenShift
 
+> **Before you begin:** Log in to OpenShift (`oc login`) and, if using local build + push, your container registry (`podman login`).
+> See [OpenShift Deployment](../../../docs/openshift-deployment.md) for full prerequisites and step-by-step instructions.
+
 ### Setup
 
 ```bash
@@ -199,8 +202,6 @@ oc get route langgraph-hitl-agent -o jsonpath='{.spec.host}'
 ```bash
 make undeploy
 ```
-
-See [OpenShift Deployment](../../../docs/openshift-deployment.md) for more details.
 
 ### Testing on OpenShift
 
@@ -417,6 +418,30 @@ This agent extends the base LangGraph ReAct agent with:
 
 - The default `MemorySaver` is in-memory only
 - For production, use `PostgresSaver` (see `react_with_database_memory` agent for reference)
+
+---
+
+## OpenAI SDK for Llama-stack Connectivity
+
+This agent uses the **OpenAI SDK** (via LangChain's `ChatOpenAI`) to connect to Llama-stack or any OpenAI-compatible
+endpoint:
+
+- **`base_url`**: Points to Llama-stack server endpoint (e.g., `http://localhost:8321/v1`)
+- **`model`**: Uses Llama-stack's model identifier (e.g., `ollama/llama3.2:3b`)
+- **`api_key`**: Can be "not-needed" for local Llama-stack, required for remote OpenAI
+
+The OpenAI-compatible API allows **switching between providers** without code changes:
+just update `BASE_URL`, `MODEL_ID`, and `API_KEY` in your `.env` file.
+
+### Supported Providers:
+
+- **Local**: Ollama via Llama-stack (`http://localhost:8321/v1`)
+- **OpenAI**: OpenAI API (`https://api.openai.com/v1`)
+- **Azure OpenAI**: Azure endpoints
+- **vLLM**: Self-hosted vLLM servers
+- **Any OpenAI-compatible API**
+
+---
 
 ## Tests
 
