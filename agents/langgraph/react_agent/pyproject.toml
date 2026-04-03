@@ -32,6 +32,9 @@ eval = [
     "nltk>=3.9.1",
     "rouge-score>=0.1.2",
 ]
+tracing = [
+    "mlflow>=3.10.0",
+]
 
 [tool.setuptools.packages.find]
 where = ["src"]

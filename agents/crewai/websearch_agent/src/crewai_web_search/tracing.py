@@ -5,6 +5,8 @@ from typing import Callable, Literal, Optional
 
 import logging
 
+_TRACING_ENABLED: bool = False
+
 logger = logging.getLogger("tracing")
 logger.setLevel(logging.INFO)
 if not logger.handlers:
@@ -58,8 +60,7 @@ def wrap_func_with_mlflow_trace(func: Callable, span_type: Literal["tool", "agen
 
     Returns the original function if MLflow is not installed or tracing is disabled.
     """
-    tracking_uri: Optional[str] = getenv("MLFLOW_TRACKING_URI")
-    if not tracking_uri:
+    if not _TRACING_ENABLED:
         return func
 
     import mlflow
@@ -74,6 +75,7 @@ def wrap_func_with_mlflow_trace(func: Callable, span_type: Literal["tool", "agen
 
 
 def enable_tracing() -> None:
+    global _TRACING_ENABLED
     """
     Enable MLflow tracing if MLFLOW_TRACKING_URI is set.
 
@@ -90,10 +92,6 @@ def enable_tracing() -> None:
         logger.info("[Tracing] MLFLOW_TRACKING_URI not set. Tracing is disabled.")
         return
 
-    import importlib
-    import mlflow
-    import mlflow.crewai
-
     # Check if server is reachable
     try:
         try:
@@ -102,7 +100,7 @@ def enable_tracing() -> None:
             health_check_timeout = 5
         check_mlflow_health(mlflow_tracking_uri=tracking_uri, max_wait_time=health_check_timeout)
         logger.info(f"[Tracing] MLflow server is reachable at {tracking_uri}")
-    except RuntimeError as e:
+    except (RuntimeError, ModuleNotFoundError) as e:
         logger.warning(
             f"[Tracing] MLflow server is unreachable at {tracking_uri}. "
             f"Tried connecting for {health_check_timeout}s. Continuing without tracing. Error: {e}"
@@ -110,45 +108,60 @@ def enable_tracing() -> None:
         return
 
     # Server is reachable → enable tracing
-    mlflow.set_tracking_uri(tracking_uri)
-    experiment_name: str = getenv("MLFLOW_EXPERIMENT_NAME", "default-agent-experiment")
-    mlflow.set_experiment(experiment_name)
-    mlflow.config.enable_async_logging()
+    try:
+        import importlib
+        import mlflow
+        import mlflow.crewai
 
-    # CrewAI orchestration tracing (Crew, Task, Agent spans).
-    # Note: autolog does not capture Tool spans in newer CrewAI versions (>=1.10).
-    # Tool spans are manually traced via wrap_func_with_mlflow_trace in crew.py.
-    # If a future CrewAI/MLflow version fixes autolog to capture tool spans,
-    # remove the manual wrapping in crew.py to avoid duplicate tool spans.
-    mlflow.crewai.autolog()
+        mlflow.set_tracking_uri(tracking_uri)
+        experiment_name: str = getenv("MLFLOW_EXPERIMENT_NAME", "default-agent-experiment")
+        mlflow.set_experiment(experiment_name)
+        mlflow.config.enable_async_logging()
 
-    # LLM call-level tracing — depends on which provider path CrewAI uses.
-    # CrewAI native providers (openai, anthropic, gemini, azure, bedrock) bypass
-    # the crewai.LLM.call patch, so we need a provider-specific autolog.
-    # Non-native providers go through LiteLLM, so we use mlflow.litellm.autolog().
-    provider_autolog_map = {
-        "openai": "mlflow.openai",
-        "anthropic": "mlflow.anthropic",
-        "gemini": "mlflow.gemini",
-        "azure": "mlflow.openai",
-        "bedrock": "mlflow.bedrock",
-        "litellm": "mlflow.litellm",
-    }
+        # CrewAI orchestration tracing (Crew, Task, Agent spans).
+        # Note: autolog does not capture Tool spans in newer CrewAI versions (>=1.10).
+        # Tool spans are manually traced via wrap_func_with_mlflow_trace in crew.py.
+        # If a future CrewAI/MLflow version fixes autolog to capture tool spans,
+        # remove the manual wrapping in crew.py to avoid duplicate tool spans.
+        mlflow.crewai.autolog()
 
-    llm_provider: str = getenv("LLM_PROVIDER", "litellm").lower().strip()
+        # LLM call-level tracing — depends on which provider path CrewAI uses.
+        # CrewAI native providers (openai, anthropic, gemini, azure, bedrock) bypass
+        # the crewai.LLM.call patch, so we need a provider-specific autolog.
+        # Non-native providers go through LiteLLM, so we use mlflow.litellm.autolog().
+        provider_autolog_map = {
+            "openai": "mlflow.openai",
+            "anthropic": "mlflow.anthropic",
+            "gemini": "mlflow.gemini",
+            "azure": "mlflow.openai",
+            "bedrock": "mlflow.bedrock",
+            "litellm": "mlflow.litellm",
+        }
 
-    if llm_provider not in provider_autolog_map:
-        logger.warning(
-            f"[Tracing] Unknown LLM_PROVIDER '{llm_provider}'. "
-            f"Supported: {', '.join(provider_autolog_map.keys())}. Falling back to 'litellm'."
+        llm_provider: str = getenv("LLM_PROVIDER", "litellm").lower().strip()
+
+        if llm_provider not in provider_autolog_map:
+            logger.warning(
+                f"[Tracing] Unknown LLM_PROVIDER '{llm_provider}'. "
+                f"Supported: {', '.join(provider_autolog_map.keys())}. Falling back to 'litellm'."
+            )
+            llm_provider = "litellm"
+
+        module_name = provider_autolog_map[llm_provider]
+        module = importlib.import_module(module_name)
+        module.autolog()
+
+        _TRACING_ENABLED = True
+        logger.info(
+            f"[Tracing Enabled] MLflow -> {tracking_uri}, Experiment: {experiment_name}, "
+            f"LLM Provider: {llm_provider} ({module_name}.autolog())"
         )
-        llm_provider = "litellm"
-
-    module_name = provider_autolog_map[llm_provider]
-    module = importlib.import_module(module_name)
-    module.autolog()
-
-    logger.info(
-        f"[Tracing Enabled] MLflow -> {tracking_uri}, Experiment: {experiment_name}, "
-        f"LLM Provider: {llm_provider} ({module_name}.autolog())"
-    )
+    except ModuleNotFoundError:
+        logger.warning(
+            "[Tracing] MLflow not installed. Skipping tracing."
+        )
+    except Exception as e:
+        logger.warning(
+            f"[Tracing] Failed to configure MLflow tracing at {tracking_uri}. "
+            f"Continuing without tracing. Error: {e}"
+        )

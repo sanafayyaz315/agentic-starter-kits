@@ -14,11 +14,11 @@ init: ## Copy .env.example to .env for configuration
 
 run: ## Run agent locally with hot-reload
 	@set -a && source .env && set +a && \
-	  uv run $${MLFLOW_TRACKING_URI:+--extra tracing} uvicorn main:app --host 0.0.0.0 --port $${PORT:-8000} --reload --reload-exclude .venv
+	  uv run uvicorn main:app --host 127.0.0.1 --port $${PORT:-8000} --reload --reload-exclude .venv
 
 run-cli: ## Run interactive CLI chat (no web server)
 	@set -a && source .env && set +a && \
-	  cd examples && uv run $${MLFLOW_TRACKING_URI:+--extra tracing} python execute_ai_service_locally.py
+	  cd examples && uv run python execute_ai_service_locally.py
 
 build: ## Build container image locally (podman/docker)
 	@[ -n "$(CONTAINER_CLI)" ] || { echo "ERROR: neither podman nor docker found in PATH"; exit 1; } && \
@@ -57,20 +57,14 @@ deploy: _check-env ## Deploy to OpenShift/K8s via Helm
 	  LAST_SEG="$${CONTAINER_IMAGE##*/}" && if [[ "$$LAST_SEG" == *:* ]]; then IMAGE_REPO="$${CONTAINER_IMAGE%:*}"; IMAGE_TAG="$${LAST_SEG##*:}"; else IMAGE_REPO="$${CONTAINER_IMAGE}"; IMAGE_TAG="latest"; fi && \
 	  trap 'rm -f .helm-secrets.yaml' EXIT && \
 	  umask 077 && \
-	  { printf 'secrets:\n  apiKey: "%s"\n' "$${API_KEY}"; \
-	    [ -z "$${MLFLOW_TRACKING_TOKEN}" ] || printf '  mlflowTrackingToken: "%s"\n' "$${MLFLOW_TRACKING_TOKEN}"; \
-	  } > .helm-secrets.yaml && \
+	  printf 'secrets:\n  apiKey: "%s"\n' "$${API_KEY}" > .helm-secrets.yaml && \
 	  helm upgrade --install $(AGENT_NAME) $(CHART_DIR) \
 	    -f $(VALUES_FILE) \
 	    -f .helm-secrets.yaml \
 	    --set image.repository="$${IMAGE_REPO}" \
 	    --set image.tag="$${IMAGE_TAG}" \
 	    --set env.BASE_URL="$${BASE_URL}" \
-	    --set env.MODEL_ID="$${MODEL_ID}" \
-	    $${MLFLOW_TRACKING_URI:+--set env.MLFLOW_TRACKING_URI="$${MLFLOW_TRACKING_URI}"} \
-	    $${MLFLOW_EXPERIMENT_NAME:+--set env.MLFLOW_EXPERIMENT_NAME="$${MLFLOW_EXPERIMENT_NAME}"} \
-	    $${MLFLOW_TRACKING_INSECURE_TLS:+--set env.MLFLOW_TRACKING_INSECURE_TLS="$${MLFLOW_TRACKING_INSECURE_TLS}"} \
-	    $${MLFLOW_WORKSPACE:+--set env.MLFLOW_WORKSPACE="$${MLFLOW_WORKSPACE}"} && \
+	    --set env.MODEL_ID="$${MODEL_ID}" && \
 	  if command -v oc >/dev/null 2>&1; then \
 	    echo "" && echo "Waiting for rollout to complete..." && \
 	    if oc rollout status deployment/$(AGENT_NAME) --timeout=120s; then \
@@ -93,12 +87,7 @@ dry-run: _check-env ## Render Helm templates without deploying
 	    --set image.repository="$${IMAGE_REPO}" \
 	    --set image.tag="$${IMAGE_TAG}" \
 	    --set env.BASE_URL="$${BASE_URL}" \
-	    --set env.MODEL_ID="$${MODEL_ID}" \
-	    $${MLFLOW_TRACKING_URI:+--set env.MLFLOW_TRACKING_URI="$${MLFLOW_TRACKING_URI}"} \
-	    $${MLFLOW_TRACKING_TOKEN:+--set secrets.mlflowTrackingToken="REDACTED"} \
-	    $${MLFLOW_EXPERIMENT_NAME:+--set env.MLFLOW_EXPERIMENT_NAME="$${MLFLOW_EXPERIMENT_NAME}"} \
-	    $${MLFLOW_TRACKING_INSECURE_TLS:+--set env.MLFLOW_TRACKING_INSECURE_TLS="$${MLFLOW_TRACKING_INSECURE_TLS}"} \
-	    $${MLFLOW_WORKSPACE:+--set env.MLFLOW_WORKSPACE="$${MLFLOW_WORKSPACE}"}
+	    --set env.MODEL_ID="$${MODEL_ID}"
 
 undeploy: ## Remove deployment from cluster
 	helm uninstall $(AGENT_NAME)

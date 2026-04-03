@@ -5,6 +5,8 @@ from typing import Callable, Literal, Optional
 
 import logging
 
+_TRACING_ENABLED: bool = False
+
 logger = logging.getLogger("tracing")
 logger.setLevel(logging.INFO)
 if not logger.handlers:
@@ -59,8 +61,7 @@ def wrap_func_with_mlflow_trace(func: Callable, span_type: Literal["tool", "agen
 
     Returns the original function if MLflow is not installed or tracing is disabled.
     """
-    tracking_uri: Optional[str] = getenv("MLFLOW_TRACKING_URI")
-    if not tracking_uri:
+    if not _TRACING_ENABLED:
         return func
 
     import mlflow
@@ -74,6 +75,7 @@ def wrap_func_with_mlflow_trace(func: Callable, span_type: Literal["tool", "agen
         raise ValueError(f"Unsupported trace type: {span_type}")
 
 def enable_tracing() -> None:
+    global _TRACING_ENABLED
     """
     Enable MLflow tracing if MLFLOW_TRACKING_URI is set.
 
@@ -90,9 +92,6 @@ def enable_tracing() -> None:
         logger.info("[Tracing] MLFLOW_TRACKING_URI not set. Tracing is disabled.")
         return
 
-    import mlflow
-    import mlflow.openai
-
     # Check if server is reachable
     try:
         try:
@@ -101,7 +100,7 @@ def enable_tracing() -> None:
             health_check_timeout = 5
         check_mlflow_health(mlflow_tracking_uri=tracking_uri, max_wait_time=health_check_timeout)
         logger.info(f"[Tracing] MLflow server is reachable at {tracking_uri}")
-    except RuntimeError as e:
+    except (RuntimeError, ModuleNotFoundError) as e:
         logger.warning(
             f"[Tracing] MLflow server is unreachable at {tracking_uri}. "
             f"Tried connecting for {health_check_timeout}s. Continuing without tracing. Error: {e}"
@@ -109,11 +108,25 @@ def enable_tracing() -> None:
         return
 
     # Server is reachable → enable tracing
-    mlflow.set_tracking_uri(tracking_uri)
-    experiment_name: str = getenv("MLFLOW_EXPERIMENT_NAME", "default-agent-experiment")
-    mlflow.set_experiment(experiment_name)
-    mlflow.config.enable_async_logging()
+    try:
+        import mlflow
+        import mlflow.openai
 
-    mlflow.openai.autolog()
+        mlflow.set_tracking_uri(tracking_uri)
+        experiment_name: str = getenv("MLFLOW_EXPERIMENT_NAME", "default-agent-experiment")
+        mlflow.set_experiment(experiment_name)
+        mlflow.config.enable_async_logging()
 
-    logger.info(f"[Tracing Enabled] MLflow -> {tracking_uri}, Experiment: {experiment_name}")
+        mlflow.openai.autolog()
+
+        _TRACING_ENABLED = True
+        logger.info(f"[Tracing Enabled] MLflow -> {tracking_uri}, Experiment: {experiment_name}")
+    except ModuleNotFoundError:
+        logger.warning(
+            "[Tracing] MLflow not installed. Skipping tracing."
+        )
+    except Exception as e:
+        logger.warning(
+            f"[Tracing] Failed to configure MLflow tracing at {tracking_uri}. "
+            f"Continuing without tracing. Error: {e}"
+        )

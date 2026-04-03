@@ -14,7 +14,7 @@ def get_graph_closure(
 ) -> Any:
     """Build and return a LangGraph ReAct agent with the configured LLM and tools.
 
-    Creates a ChatOpenAI client, wires dummy_web_search and dummy_math tools,
+    Creates a ChatOpenAI client, wires dummy_web_search tool,
     and uses create_agent to produce a graph that runs the ReAct loop (reason,
     act with tools, observe, repeat until a final answer).
 
