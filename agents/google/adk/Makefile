@@ -3,8 +3,9 @@ AGENT_NAME     := $(shell python3 -c "import re; print(re.search(r'^name:\s*(.+)
 CHART_DIR      := ../../../charts/agent
 VALUES_FILE    := values.yaml
 CONTAINER_CLI  := $(shell command -v podman 2>/dev/null || command -v docker 2>/dev/null)
+MODEL          ?= llama3.1:8b
 
-.PHONY: init re-init env ollama llama run run-cli build push build-openshift deploy undeploy test dry-run help
+.PHONY: init re-init env ollama llama run-app run-app-fresh run-cli build push build-openshift deploy undeploy test dry-run help
 
 help: ## Show this help
 	@grep -E '^[a-zA-Z_-]+:.*?## .*$$' $(MAKEFILE_LIST) | awk 'BEGIN {FS = ":.*?## "}; {printf "  %-12s %s\n", $$1, $$2}'
@@ -17,13 +18,11 @@ init: ## Copy .env.example to .env for configuration
 	@if [ ! -f .env ]; then cp .env.example .env && echo "Created .env from .env.example — edit it with your configuration"; else echo ".env already exists — skipping"; fi
 
 env: ## Create venv, load .env, and install dependencies
-	@echo "==> Creating virtual environment..." && \
+	@echo "==> Creating virtual environment and installing dependencies..." && \
 	  rm -rf .venv && \
-	  uv venv --python 3.12 && \
+	  uv sync --python 3.12 && \
 	  echo "==> Load .env variables..." && \
 	  source .venv/bin/activate && set -a && source .env && set +a && \
-	  echo "==> Installing dependencies..." && \
-	  uv pip install -e . && \
 	  echo "" && \
 	  echo "Done. Next steps:" && \
 	  echo "  make ollama   # install Ollama and pull models" && \
@@ -41,17 +40,17 @@ ollama: ## Install Ollama, start it, and pull models
 	  ollama serve &>/dev/null & \
 	  echo "Waiting for Ollama to be ready..." && \
 	  until ollama list >/dev/null 2>&1; do sleep 1; done && \
-	  echo "==> Pulling llama3.1:8b..." && \
-	  ollama pull llama3.1:8b && \
-	  echo "==> Pulling embeddinggemma:latest..." && \
-	  ollama pull embeddinggemma:latest && \
+	  echo "==> Pulling $(MODEL)..." && \
+	  ollama pull $(MODEL) && \
 	  echo "==> Creating Milvus dir..." && \
 	  mkdir -p ../../../milvus_data && \
 	  echo "" && \
-	  echo "Done. Run 'make llama' to start the Llama Stack server."
+	  echo "Done. Run 'make llama-server' to start the Llama Stack server."
 
-llama-server: ## Start Llama Stack server
+llama-server: ## Install llama-stack and start Llama Stack server
 	@source .venv/bin/activate && set -a && source .env && set +a && \
+	  echo "==> Installing llama-stack..." && \
+	  uv pip install "llama-stack==0.5.0" "llama-stack-api==0.5.0" && \
 	  echo "==> Killing any existing process on port 8321..." && \
 	  lsof -ti:8321 | xargs kill -9 2>/dev/null; true && \
 	  echo "==> Starting Llama Stack server on port 8321..." && \
@@ -59,12 +58,21 @@ llama-server: ## Start Llama Stack server
 
 run-app: ## Run agent locally with hot-reload
 	@source .venv/bin/activate && set -a && source .env && set +a && \
+	  if lsof -ti:$${PORT:-8000} >/dev/null 2>&1; then \
+	    echo "ERROR: Port $${PORT:-8000} is already in use." && \
+	    echo "  Change PORT in .env or run: make run-app-fresh" && \
+	    exit 1; \
+	  fi && \
+	  uv run uvicorn main:app --host 0.0.0.0 --port $${PORT:-8000} --reload --reload-exclude .venv
+
+run-app-fresh: ## Kill existing process on port and run agent with hot-reload
+	@source .venv/bin/activate && set -a && source .env && set +a && \
+	  echo "==> Killing existing process on port $${PORT:-8000}..." && \
 	  lsof -ti:$${PORT:-8000} | xargs kill -9 2>/dev/null; true && \
 	  uv run uvicorn main:app --host 0.0.0.0 --port $${PORT:-8000} --reload --reload-exclude .venv
 
 run-cli: ## Run interactive CLI chat (no web server)
 	@source .venv/bin/activate && set -a && source .env && set +a && \
-	  lsof -ti:8000 | xargs kill -9 2>/dev/null; true && \
 	  cd examples && uv run python execute_ai_service_locally.py
 
 build: ## Build container image locally (podman/docker)
@@ -113,8 +121,15 @@ deploy: _check-env ## Deploy to OpenShift/K8s via Helm
 	    --set env.BASE_URL="$${BASE_URL}" \
 	    --set env.MODEL_ID="$${MODEL_ID}" && \
 	  if command -v oc >/dev/null 2>&1; then \
-	    ROUTE=$$(oc get route $(AGENT_NAME) -o jsonpath='{.spec.host}' 2>/dev/null || true); \
-	    if [ -n "$$ROUTE" ]; then echo "" && echo "Agent is available at: https://$$ROUTE" && echo "Note: It may take about a minute for the application to become available."; fi; \
+	    echo "" && echo "Waiting for rollout to complete..." && \
+	    if oc rollout status deployment/$(AGENT_NAME) --timeout=120s; then \
+	      ROUTE=$$(oc get route $(AGENT_NAME) -o jsonpath='{.spec.host}' 2>/dev/null || true); \
+	      if [ -n "$$ROUTE" ]; then echo "" && echo "Agent is available at: https://$$ROUTE"; fi; \
+	    else \
+	      echo "" && echo "WARNING: Rollout did not complete successfully. Check pod status with:" && \
+	      echo "  oc get pods -l app.kubernetes.io/name=$(AGENT_NAME)" && \
+	      echo "  oc logs deployment/$(AGENT_NAME)"; \
+	    fi; \
 	  fi
 
 dry-run: _check-env ## Render Helm templates without deploying

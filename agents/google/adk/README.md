@@ -50,9 +50,11 @@ make env
 #### Setup Ollama
 
 This will install ollama if it is not installed already. Then pull needed models for local work.
+The default model is `llama3.1:8b`. To use a different model, pass `MODEL=`:
+`make ollama MODEL=llama3.2:3b`
 
 ```bash
-make ollama
+make ollama                        # pulls llama3.1:8b (default)
 ```
 
 #### Run llama server
@@ -66,12 +68,12 @@ make llama-server
 
 #### Run the interactive web application
 
-> **Keep this terminal open** – the server needs to keep running.
-> You should see output indicating the server started on `http://localhost:8321`.
+> **Keep this terminal open** – the app needs to keep running.
+> You should see output indicating the app started on `http://localhost:8000`.
 
 ```bash
 cd agents/google/adk
-make run-app
+make run-app           # fails if port is already in use and print steps TO-DO
 ```
 
 #### Interactive CLI
