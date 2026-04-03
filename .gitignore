@@ -17,13 +17,5 @@ uv.lock
 agents/langflow/simple_tool_calling_agent/local/.ollama-enabled
 *.db
 CLAUDE.md
-.claude/skills/add-manual-tracing/
-.claude/skills/check-autolog-support/
-.claude/skills/create-tracing-module/
-.claude/skills/integrate-tracing/
-.claude/skills/review-tracing-code/
-.claude/skills/test-tracing/
-.claude/skills/verify-traces/
-.claude/skills/wire-into-lifespan/
 tracing.md
 agents/demo/
