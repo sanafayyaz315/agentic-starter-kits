@@ -17,4 +17,3 @@ uv.lock
 agents/langflow/simple_tool_calling_agent/local/.ollama-enabled
 *.db
 CLAUDE.md
-agents/demo/

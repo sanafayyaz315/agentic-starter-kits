@@ -11,6 +11,7 @@ from fastapi.responses import FileResponse, HTMLResponse, StreamingResponse
 from langchain_core.messages import HumanMessage, AIMessage, ToolMessage
 from pydantic import BaseModel, Field
 from agentic_rag.agent import get_graph_closure
+from agentic_rag.tracing import enable_tracing
 
 logger = logging.getLogger(__name__)
 
@@ -115,6 +116,8 @@ agent_graph = None
 async def lifespan(app: FastAPI):
     """Initialize the RAG agent graph on startup and clear it on shutdown."""
     global agent_graph
+
+    enable_tracing()
 
     base_url = getenv("BASE_URL")
     model_id = getenv("MODEL_ID")
