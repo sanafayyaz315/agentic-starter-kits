@@ -16,4 +16,3 @@ tests/
 examples/
 docs/
 *.md
-!README.md

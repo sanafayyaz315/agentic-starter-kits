@@ -4,7 +4,6 @@ version = "0.2.0"
 description = "A LangGraph Agentic RAG app using OpenAI-compatible APIs. Supports retrieval-augmented generation with customizable vector stores."
 authors = [{ name = "Your Name", email = "you@example.com" }]
 license = { text = "MIT" }
-readme = "README.md"
 requires-python = ">=3.12, <3.14"
 dependencies = [
     "fastapi>=0.132.0",
