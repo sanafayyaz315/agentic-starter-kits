@@ -15,6 +15,7 @@ from pydantic import BaseModel, Field
 from os import getenv
 
 from react_with_database_memory.agent import get_graph_closure
+from react_with_database_memory.tracing import enable_tracing
 from react_with_database_memory.utils import (
     get_database_uri,
 )
@@ -131,6 +132,8 @@ DB_URI = None
 async def lifespan(app: FastAPI):
     """Initialize the ReAct agent graph on startup and clear it on shutdown."""
     global agent_graph_closure, DB_URI
+
+    enable_tracing()
 
     base_url = getenv("BASE_URL")
     model_id = getenv("MODEL_ID")
@@ -469,7 +472,7 @@ async def health():
 # ── Playground UI ────────────────────────────────────────────────────────────
 _BASE_DIR = Path(__file__).resolve().parent
 _PLAYGROUND_HTML = _BASE_DIR / "playground" / "templates" / "index.html"
-# In Docker the images are copied to /app/images; locally they live at the repo root
+# In Docker the images are copied to /opt/app-root/src/images; locally they live at the repo root
 _IMAGES_DIR = _BASE_DIR / "images"
 if not _IMAGES_DIR.is_dir():
     _IMAGES_DIR = _BASE_DIR.parent.parent.parent / "images"

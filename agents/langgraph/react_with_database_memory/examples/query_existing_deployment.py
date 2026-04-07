@@ -2,6 +2,8 @@
 Query PostgreSQL checkpoint database to inspect stored conversation messages.
 Set thread_id below and run the script.
 """
+from dotenv import load_dotenv
+load_dotenv()
 
 from langgraph.checkpoint.postgres import PostgresSaver
 from react_with_database_memory.utils import get_database_uri
