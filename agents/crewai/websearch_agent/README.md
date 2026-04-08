@@ -41,6 +41,22 @@ make init
 
 Edit `.env` with your configuration, then:
 
+See [Local Development](../../../docs/local-development.md) for Ollama + Llama Stack setup for local model serving.
+
+#### Pointing to a remotely hosted model
+
+```ini
+API_KEY=your-api-key-here
+BASE_URL=https://your-model-endpoint.com/v1
+MODEL_ID=llama-3.1-8b-instruct
+```
+
+**Notes:**
+
+- `API_KEY` — your API key or contact your cluster administrator
+- `BASE_URL` — should end with `/v1`
+- `MODEL_ID` — model identifier available on your endpoint
+
 #### Creating environment
 
 Now you will remove old .venv and create new. Next dependencies will be installed.
