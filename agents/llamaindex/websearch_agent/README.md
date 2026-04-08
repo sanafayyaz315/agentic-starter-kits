@@ -18,9 +18,12 @@ Agent built on LlamaIndex that uses a web search tool to query the internet and 
 
 - [uv](https://docs.astral.sh/uv/) — Python package manager
 - [Podman](https://podman.io/) or [Docker](https://www.docker.com/) — for local container builds (Option A)
-- [oc](https://docs.openshift.com/container-platform/latest/cli_reference/openshift_cli/getting-started-cli.html) — for OpenShift deployment
+- [oc](https://docs.openshift.com/container-platform/latest/cli_reference/openshift_cli/getting-started-cli.html) — for
+  OpenShift deployment
 - [Helm](https://helm.sh/) — for deploying to Kubernetes/OpenShift
-- [GNU Make](https://www.gnu.org/software/make/) and a bash-compatible shell — on Windows, use [WSL](https://learn.microsoft.com/en-us/windows/wsl/install) (recommended) or [Git Bash](https://git-scm.com/downloads)
+- [GNU Make](https://www.gnu.org/software/make/) and a bash-compatible shell — on Windows,
+  use [WSL](https://learn.microsoft.com/en-us/windows/wsl/install) (recommended)
+  or [Git Bash](https://git-scm.com/downloads)
 
 ## Deploying Locally
 
@@ -36,7 +39,7 @@ make init        # creates .env from .env.example
 #### Pointing to a locally hosted model
 
 ```ini
-API_KEY=not-needed
+API_KEY=not-needed-for-local-development
 BASE_URL=http://localhost:8321/v1
 MODEL_ID=ollama/llama3.2:3b
 ```
@@ -81,7 +84,8 @@ When `MLFLOW_TRACKING_URI` is set, `make run` and `make run-cli` will automatica
 
 #### Tracing with an OpenShift MLflow server
 
-To enable tracing and logging with MLflow on your OpenShift cluster, add the following environment variables to your `.env` file:
+To enable tracing and logging with MLflow on your OpenShift cluster, add the following environment variables to your
+`.env` file:
 
 ```ini
 MLFLOW_TRACKING_URI="https://<openshift-dashboard-url>/mlflow"
@@ -92,6 +96,7 @@ MLFLOW_WORKSPACE="default"
 ```
 
 **Notes:**
+
 - `MLFLOW_TRACKING_URI` - Replace `<openshift-dashboard-url>` with your OpenShift cluster's data science gateway URL
 - `MLFLOW_TRACKING_TOKEN` - Your openshift authentication token. It can be obtained from the openshift console.
 - `MLFLOW_EXPERIMENT_NAME` - A descriptive name for your experiment (e.g., "LlamaIndex Cluster Demo")
@@ -100,9 +105,11 @@ MLFLOW_WORKSPACE="default"
 
 - Tracing is optional; if you do not set `MLFLOW_TRACKING_URI`, the application will run without MLflow logging.
 
-- If `MLFLOW_TRACKING_URI` is set, the application will attempt to connect to the MLflow server at startup. If the server is unreachable, the application will log a warning and continue running without tracing.
+- If `MLFLOW_TRACKING_URI` is set, the application will attempt to connect to the MLflow server at startup. If the
+  server is unreachable, the application will log a warning and continue running without tracing.
 
-- You can control how long the application waits for the MLflow server by setting `MLFLOW_HEALTH_CHECK_TIMEOUT` (in seconds, default: `5`).
+- You can control how long the application waits for the MLflow server by setting `MLFLOW_HEALTH_CHECK_TIMEOUT` (in
+  seconds, default: `5`).
 
 ### Running the Agent
 
@@ -112,7 +119,8 @@ MLFLOW_WORKSPACE="default"
 make run
 ```
 
-Open [http://localhost:8000](http://localhost:8000) in your browser. A green dot in the header means the agent is connected and ready.
+Open [http://localhost:8000](http://localhost:8000) in your browser. A green dot in the header means the agent is
+connected and ready.
 
 #### Interactive CLI (`make run-cli`)
 
@@ -122,7 +130,8 @@ For terminal-based testing without a browser:
 make run-cli
 ```
 
-This launches an interactive prompt where you can pick predefined questions or type your own. Tool calls and results are displayed inline with colored output.
+This launches an interactive prompt where you can pick predefined questions or type your own. Tool calls and results are
+displayed inline with colored output.
 
 #### Standalone Flask Playground (alternative)
 
@@ -136,9 +145,9 @@ make run
 uv run flask --app playground.app run --port 5050
 ```
 
-| Variable    | Default                  | Description                     |
-|-------------|--------------------------|---------------------------------|
-| `AGENT_URL` | `http://localhost:8000`  | URL of the running agent API    |
+| Variable    | Default                 | Description                  |
+|-------------|-------------------------|------------------------------|
+| `AGENT_URL` | `http://localhost:8000` | URL of the running agent API |
 
 If the agent runs on a different host or port:
 
@@ -148,8 +157,10 @@ AGENT_URL=https://your-agent-url uv run flask --app playground.app run --port 50
 
 ## Deploying to OpenShift
 
-> **Before you begin:** Log in to OpenShift (`oc login`) and, if using local build + push, your container registry (`podman login`).
-> See [OpenShift Deployment](../../../docs/openshift-deployment.md) for full prerequisites and step-by-step instructions.
+> **Before you begin:** Log in to OpenShift (`oc login`) and, if using local build + push, your container registry (
+`podman login`).
+> See [OpenShift Deployment](../../../docs/openshift-deployment.md) for full prerequisites and step-by-step
+> instructions.
 
 ### Setup
 
@@ -185,7 +196,9 @@ CONTAINER_IMAGE=quay.io/your-username/llamaindex-websearch-agent:latest
     - Docker Hub: `docker.io/your-username/llamaindex-websearch-agent:latest`
     - GHCR: `ghcr.io/your-org/llamaindex-websearch-agent:latest`
 
-  > **Note:** OpenShift must be able to pull the container image. Make the image **public**, or configure an [image pull secret](https://docs.openshift.com/container-platform/latest/openshift_images/managing_images/using-image-pull-secrets.html) for private registries.
+  > **Note:** OpenShift must be able to pull the container image. Make the image **public**, or configure
+  an [image pull secret](https://docs.openshift.com/container-platform/latest/openshift_images/managing_images/using-image-pull-secrets.html)
+  for private registries.
 
 ### Building the Container Image
 

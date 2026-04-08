@@ -30,9 +30,12 @@ User Input → LLM decides tool → Is it sensitive?
 
 - [uv](https://docs.astral.sh/uv/) — Python package manager
 - [Podman](https://podman.io/) or [Docker](https://www.docker.com/) — for local container builds (Option A)
-- [oc](https://docs.openshift.com/container-platform/latest/cli_reference/openshift_cli/getting-started-cli.html) — for OpenShift deployment
+- [oc](https://docs.openshift.com/container-platform/latest/cli_reference/openshift_cli/getting-started-cli.html) — for
+  OpenShift deployment
 - [Helm](https://helm.sh/) — for deploying to Kubernetes/OpenShift
-- [GNU Make](https://www.gnu.org/software/make/) and a bash-compatible shell — on Windows, use [WSL](https://learn.microsoft.com/en-us/windows/wsl/install) (recommended) or [Git Bash](https://git-scm.com/downloads)
+- [GNU Make](https://www.gnu.org/software/make/) and a bash-compatible shell — on Windows,
+  use [WSL](https://learn.microsoft.com/en-us/windows/wsl/install) (recommended)
+  or [Git Bash](https://git-scm.com/downloads)
 
 ## Deploying Locally
 
@@ -48,7 +51,7 @@ make init        # creates .env from .env.example
 #### Pointing to a locally hosted model
 
 ```ini
-API_KEY=not-needed
+API_KEY=not-needed-for-local-development
 BASE_URL=http://localhost:8321/v1
 MODEL_ID=ollama/llama3.2:3b
 ```
@@ -77,7 +80,8 @@ MODEL_ID=llama-3.1-8b-instruct
 make run
 ```
 
-Open [http://localhost:8000](http://localhost:8000) in your browser. A green dot in the header means the agent is connected and ready.
+Open [http://localhost:8000](http://localhost:8000) in your browser. A green dot in the header means the agent is
+connected and ready.
 
 When the agent pauses for approval, an **Approve / Reject** banner appears directly in the chat.
 
@@ -89,7 +93,8 @@ For terminal-based testing without a browser:
 make run-cli
 ```
 
-This launches an interactive prompt where you can pick predefined questions or type your own. Tool calls and results are displayed inline with colored output.
+This launches an interactive prompt where you can pick predefined questions or type your own. Tool calls and results are
+displayed inline with colored output.
 
 #### Standalone Flask Playground (alternative)
 
@@ -103,9 +108,9 @@ make run
 uv run flask --app playground.app run --port 5050
 ```
 
-| Variable    | Default                  | Description                     |
-|-------------|--------------------------|---------------------------------|
-| `AGENT_URL` | `http://localhost:8000`  | URL of the running agent API    |
+| Variable    | Default                 | Description                  |
+|-------------|-------------------------|------------------------------|
+| `AGENT_URL` | `http://localhost:8000` | URL of the running agent API |
 
 If the agent runs on a different host or port:
 
@@ -115,8 +120,10 @@ AGENT_URL=https://your-agent-url uv run flask --app playground.app run --port 50
 
 ## Deploying to OpenShift
 
-> **Before you begin:** Log in to OpenShift (`oc login`) and, if using local build + push, your container registry (`podman login`).
-> See [OpenShift Deployment](../../../docs/openshift-deployment.md) for full prerequisites and step-by-step instructions.
+> **Before you begin:** Log in to OpenShift (`oc login`) and, if using local build + push, your container registry (
+`podman login`).
+> See [OpenShift Deployment](../../../docs/openshift-deployment.md) for full prerequisites and step-by-step
+> instructions.
 
 ### Setup
 
@@ -428,7 +435,7 @@ endpoint:
 
 - **`base_url`**: Points to Llama-stack server endpoint (e.g., `http://localhost:8321/v1`)
 - **`model`**: Uses Llama-stack's model identifier (e.g., `ollama/llama3.2:3b`)
-- **`api_key`**: Can be "not-needed" for local Llama-stack, required for remote OpenAI
+- **`api_key`**: Can be "not-needed-for-local-development" for local Llama-stack, required for remote OpenAI
 
 The OpenAI-compatible API allows **switching between providers** without code changes:
 just update `BASE_URL`, `MODEL_ID`, and `API_KEY` in your `.env` file.

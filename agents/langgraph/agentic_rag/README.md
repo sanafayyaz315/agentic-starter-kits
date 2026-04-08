@@ -44,8 +44,8 @@ Edit the `.env` file with your local configuration:
 # LLM
 BASE_URL=http://localhost:8321
 MODEL_ID=ollama/llama3.2:3b
-API_KEY=not-needed
-CONTAINER_IMAGE=not-needed
+API_KEY=not-needed-for-local-development
+CONTAINER_IMAGE=not-needed-for-local-development
 
 # RAG-specific Configuration
 EMBEDDING_MODEL=ollama/embeddinggemma:latest
@@ -66,10 +66,10 @@ PORT=8000
 ##### Tracing
 
 ```ini
-MLFLOW_TRACKING_URI="http://localhost:5000"
-MLFLOW_EXPERIMENT_NAME="Langgraph RAG Local Experiment"
-MLFLOW_HTTP_REQUEST_TIMEOUT=2
-MLFLOW_HTTP_REQUEST_MAX_RETRIES=0
+MLFLOW_TRACKING_URI = "http://localhost:5000"
+MLFLOW_EXPERIMENT_NAME = "Langgraph RAG Local Experiment"
+MLFLOW_HTTP_REQUEST_TIMEOUT = 2
+MLFLOW_HTTP_REQUEST_MAX_RETRIES = 0
 ```
 
 #### OpenShift Cluster
@@ -106,17 +106,19 @@ PORT=8000
 
 ##### Tracing
 
-To enable tracing and logging with MLflow on your OpenShift cluster, add the following environment variables to your `.env` file:
+To enable tracing and logging with MLflow on your OpenShift cluster, add the following environment variables to your
+`.env` file:
 
 ```ini
-MLFLOW_TRACKING_URI="https://<openshift-dashboard-url>/mlflow"
-MLFLOW_TRACKING_TOKEN="<your-openshift-token>"
-MLFLOW_EXPERIMENT_NAME="<your-experiment-name>"
-MLFLOW_TRACKING_INSECURE_TLS="true" # If the OpenShift cluster does not use trusted certificates
-MLFLOW_WORKSPACE="<your project name>"
+MLFLOW_TRACKING_URI = "https://<openshift-dashboard-url>/mlflow"
+MLFLOW_TRACKING_TOKEN = "<your-openshift-token>"
+MLFLOW_EXPERIMENT_NAME = "<your-experiment-name>"
+MLFLOW_TRACKING_INSECURE_TLS = "true" # If the OpenShift cluster does not use trusted certificates
+MLFLOW_WORKSPACE = "<your project name>"
 ```
 
 **Notes:**
+
 - `MLFLOW_TRACKING_URI` - Replace `<openshift-dashboard-url>` with your OpenShift cluster's data science gateway URL
 - `MLFLOW_TRACKING_TOKEN` - Your openshift authentication token. It can be obtained from the openshift console.
 - `MLFLOW_EXPERIMENT_NAME` - A descriptive name for your experiment (e.g., "Langgraph RAG Cluster Demo")
@@ -125,9 +127,11 @@ MLFLOW_WORKSPACE="<your project name>"
 
 - Tracing is optional; if you do not set `MLFLOW_TRACKING_URI`, the application will run without MLflow logging.
 
-- If `MLFLOW_TRACKING_URI` is set, the application will attempt to connect to the MLflow server at startup. If the server is unreachable, the application will log a warning and continue running without tracing.
+- If `MLFLOW_TRACKING_URI` is set, the application will attempt to connect to the MLflow server at startup. If the
+  server is unreachable, the application will log a warning and continue running without tracing.
 
-- You can control how long the application waits for the MLflow server by setting `MLFLOW_HEALTH_CHECK_TIMEOUT` (in seconds, default: `5`).
+- You can control how long the application waits for the MLflow server by setting `MLFLOW_HEALTH_CHECK_TIMEOUT` (in
+  seconds, default: `5`).
 
 Create and activate a virtual environment (Python 3.12) in this directory using [uv](https://docs.astral.sh/uv/):
 
@@ -161,6 +165,7 @@ uv pip install -e .
 ```
 
 Install mlflow (>=3.10.0) - *Optional: Only required if tracing is enabled*
+
 ```bash
 uv pip install "mlflow>=3.10.0"
 ```
@@ -192,10 +197,12 @@ ollama serve
 > Ollama needs to keep running.
 
 Start MLflow Server
+
 ```bash
 mlflow server --port 5000
 ```
->**Keep this terminal open** - the server needs to keep running.
+
+> **Keep this terminal open** - the server needs to keep running.
 
 Start LlamaStack Server
 
@@ -246,6 +253,7 @@ docker login -u='login' -p='password' quay.io
 ```
 
 Install MLflow for RHOAI 3.2 or 3.3 - *Optional: Only required if tracing is enabled*
+
 ```bash
 uv pip install "git+https://github.com/red-hat-data-services/mlflow@rhoai-3.3"
 ```
@@ -338,9 +346,9 @@ uvicorn main:app --port 8000
 flask --app playground/app run --port 5001
 ```
 
-| Variable    | Default                  | Description                     |
-|-------------|--------------------------|---------------------------------|
-| `AGENT_URL` | `http://localhost:8000`  | URL of the running agent API    |
+| Variable    | Default                 | Description                  |
+|-------------|-------------------------|------------------------------|
+| `AGENT_URL` | `http://localhost:8000` | URL of the running agent API |
 
 If the agent runs on a different host or port:
 

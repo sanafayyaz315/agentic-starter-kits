@@ -49,7 +49,7 @@ def get_agent(
 
     # Configure LiteLLM's OpenAI provider environment for LlamaStack
     os.environ["OPENAI_API_BASE"] = base_url
-    os.environ["OPENAI_API_KEY"] = api_key or "not-needed"
+    os.environ["OPENAI_API_KEY"] = api_key or "not-needed-for-local-development"
 
     model = LiteLlm(model=f"openai/{model_id}")
 

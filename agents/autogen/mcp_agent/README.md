@@ -1,12 +1,15 @@
 # AutoGen Agent (MCP)
 
-An AutoGen-based agent with MCP tools: it connects to the MCP server over SSE, loads tools (e.g. churn / deployment), and answers user questions. Exposes a FastAPI API with a `/chat` endpoint.
+An AutoGen-based agent with MCP tools: it connects to the MCP server over SSE, loads tools (e.g. churn / deployment),
+and answers user questions. Exposes a FastAPI API with a `/chat` endpoint.
 
 ---
 
 ## What this agent does
 
-The agent uses AutoGen (AssistantAgent) and `autogen_ext.tools.mcp`: it connects to the MCP server over SSE, loads MCP tools (e.g. `invoke_churn`, which calls the model via `DEPLOYMENT_URL`), and uses an LLM (Llama Stack / OpenAI) for reasoning and tool selection. Responses are returned via the `/chat/completions` endpoint.
+The agent uses AutoGen (AssistantAgent) and `autogen_ext.tools.mcp`: it connects to the MCP server over SSE, loads MCP
+tools (e.g. `invoke_churn`, which calls the model via `DEPLOYMENT_URL`), and uses an LLM (Llama Stack / OpenAI) for
+reasoning and tool selection. Responses are returned via the `/chat/completions` endpoint.
 
 ---
 
@@ -38,13 +41,14 @@ For local runs (e.g. Ollama), set at least:
 ```
 BASE_URL=http://localhost:11434
 MODEL_ID=llama3.2:3b
-API_KEY=not-needed
+API_KEY=not-needed-for-local-development
 MCP_SERVER_URL=http://127.0.0.1:8000/sse
 CONTAINER_IMAGE=not-needed
 CONTAINER_IMAGE_MCP=not-needed
 ```
 
-Use port **8000** for MCP so the agent can run on **8080**. The app loads `.env` automatically. You will start the MCP server first (see "Local usage" below).
+Use port **8000** for MCP so the agent can run on **8080**. The app loads `.env` automatically. You will start the MCP
+server first (see "Local usage" below).
 
 #### OpenShift cluster
 
@@ -106,16 +110,20 @@ uv pip install -e .
    uv run uvicorn main:app --host 0.0.0.0 --port 8080
    ```
 
-3. Test: `curl -X POST http://localhost:8080/chat/completions -H "Content-Type: application/json" -d '{"message": "What is 2+7? Use a tool!"}'`
+3. Test:
+   `curl -X POST http://localhost:8080/chat/completions -H "Content-Type: application/json" -d '{"message": "What is 2+7? Use a tool!"}'`
 
-4. Optional: open **http://localhost:8080/** for the chat playground (includes an **MCP tools** panel for the last reply), or **http://localhost:8080/docs** for Swagger UI. Non-streaming `POST /chat/completions` includes `tool_invocations` in JSON; streaming sends an extra SSE object `mcp.tool_usage` before `[DONE]` (OpenAI extension).
+4. Optional: open **http://localhost:8080/** for the chat playground (includes an **MCP tools** panel for the last
+   reply), or **http://localhost:8080/docs** for Swagger UI. Non-streaming `POST /chat/completions` includes
+   `tool_invocations` in JSON; streaming sends an extra SSE object `mcp.tool_usage` before `[DONE]` (OpenAI extension).
 
 ---
 
 **Details:**
 
 - **MCP server** must be reachable at `MCP_SERVER_URL` (e.g. `http://127.0.0.1:8000/sse`). Start it first.
-- **LLM** — local (Ollama) or remote; `BASE_URL` and `MODEL_ID` in `.env` must be correct (Ollama: `BASE_URL=http://localhost:11434`, `MODEL_ID=llama3.2:3b`).
+- **LLM** — local (Ollama) or remote; `BASE_URL` and `MODEL_ID` in `.env` must be correct (Ollama:
+  `BASE_URL=http://localhost:11434`, `MODEL_ID=llama3.2:3b`).
 
 Test the `/chat` endpoint:
 
@@ -178,7 +186,8 @@ The script will:
 - Build and push the agent image,
 - Create a Secret for the API key,
 - Deploy the agent Deployment, Service, and Route,
-- Set the agent’s `MCP_SERVER_URL` to the **in-cluster** MCP Service (`http://mcp-automl:8080/sse` by default; no `.env` entry required).
+- Set the agent’s `MCP_SERVER_URL` to the **in-cluster** MCP Service (`http://mcp-automl:8080/sse` by default; no `.env`
+  entry required).
 
 Get the agent Route URL:
 
@@ -200,7 +209,8 @@ curl -X POST https://<YOUR_ROUTE_URL>/chat/completions \
   -d '{"message": "Predict churn for this customer: Male, 12 months tenure, fiber optic, month-to-month contract, electronic check, monthly 70.35, total 800.40."}'
 ```
 
-**Streaming** (`stream: true`): response is Server-Sent Events (`chat.completion.chunk` per line, then `data: [DONE]`). Use `curl -N` or `-sN` so chunks print live:
+**Streaming** (`stream: true`): response is Server-Sent Events (`chat.completion.chunk` per line, then `data: [DONE]`).
+Use `curl -N` or `-sN` so chunks print live:
 
 ```bash
 curl -sN -X POST https://<YOUR_ROUTE_URL>/chat/completions \
