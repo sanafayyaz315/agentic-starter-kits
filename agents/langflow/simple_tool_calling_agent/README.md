@@ -57,17 +57,46 @@ pip install podman-compose      # install compose plugin
 sudo systemctl start podman     # start the podman service
 ```
 
-## Deploying Locally
+## Local Development
 
-### Setup
+#### Initiating base
+
+Here you copy .env.example file into .env and generate Langfuse secrets
 
 ```bash
 cd agents/langflow/simple_tool_calling_agent
-make init        # creates local/.env from .env.example, generates Langfuse secrets
-make run         # starts Langflow + PostgreSQL + Langfuse v3 (ClickHouse, MinIO, Redis)
+make init
 ```
 
-### Import the flow
+#### Setup Ollama
+
+This will install ollama if it is not installed already. Then pull needed models for local work.
+The default model is `qwen2.5:7b`. To use a different model, pass `MODEL=`:
+`make ollama MODEL=llama3.1:8b`
+
+```bash
+make ollama
+```
+
+#### Run llama server
+
+> **Keep this terminal open** – the server needs to keep running.
+> You should see output indicating the server started on `http://localhost:8321`.
+
+```bash
+make llama-server
+```
+
+#### Run the Langflow stack
+
+> **Keep this terminal open** – the stack needs to keep running.
+> This starts Langflow + PostgreSQL + Langfuse v3 (ClickHouse, MinIO, Redis).
+
+```bash
+make run
+```
+
+#### Import the flow
 
 1. Open http://localhost:7860
 2. On first launch, Langflow asks you to create a flow — create a **Blank Flow** (this is just to get past the initial
@@ -75,7 +104,7 @@ make run         # starts Langflow + PostgreSQL + Langfuse v3 (ClickHouse, MinIO
 3. Click the **Langflow icon** (top left) to go to the projects page
 4. Click **Upload Flow** and select `flows/outdoor-activity-agent.json`
 
-### Configuration
+#### Configuration
 
 Configure the flow components:
 
@@ -108,11 +137,11 @@ Update the **KServe vLLM** component in the Langflow UI:
 | model_name | your-model-id          |
 | api_key    | your-api-key           |
 
-### Running the Agent
+#### Running the Agent
 
 Run the agent from the Langflow UI by clicking the **Play** button.
 
-### Tracing
+#### Tracing
 
 Langfuse v3 tracing is included in the local stack and starts automatically. No additional setup needed.
 
@@ -142,6 +171,12 @@ make clean       # stop services, remove all data
 There is nothing to build or deploy — no Dockerfiles, no Helm charts, no k8s manifests. This agent assumes Langflow,
 Langfuse, and an LLM (LlamaStack/KServe) are already running on the cluster. You just import the flow JSON into the
 existing Langflow instance and configure it.
+
+### Login to OC
+
+```bash
+oc login -u "login" -p "password" https://super-link-to-cluster:111
+```
 
 ### Finding cluster endpoints
 

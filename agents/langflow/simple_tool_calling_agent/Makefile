@@ -1,8 +1,9 @@
 SHELL          := bash
 COMPOSE_FILE   := local/podman-compose.yml
 ENV_FILE       := local/.env
+MODEL          ?= qwen2.5:7b
 
-.PHONY: init run stop clean status logs help
+.PHONY: init ollama llama-server run stop clean status logs help
 
 help: ## Show this help
 	@grep -E '^[a-zA-Z_-]+:.*?## .*$$' $(MAKEFILE_LIST) | awk 'BEGIN {FS = ":.*?## "}; {printf "  %-12s %s\n", $$1, $$2}'
@@ -25,6 +26,30 @@ init: ## Create local/.env from .env.example and generate secrets
 	  rm -f $(ENV_FILE).bak && \
 	  echo "Generated Langfuse encryption key."; \
 	fi
+
+ollama: ## Install Ollama, start it, and pull models
+	@if command -v ollama >/dev/null 2>&1; then \
+	  echo "==> Ollama already installed, skipping..."; \
+	else \
+	  echo "==> Installing Ollama..." && \
+	  curl -fsSL https://ollama.com/install.sh | sh; \
+	fi && \
+	  echo "==> Starting Ollama service..." && \
+	  ollama serve &>/dev/null & \
+	  echo "Waiting for Ollama to be ready..." && \
+	  until ollama list >/dev/null 2>&1; do sleep 1; done && \
+	  echo "==> Pulling $(MODEL)..." && \
+	  ollama pull $(MODEL) && \
+	  echo "" && \
+	  echo "Done. Run 'make llama-server' to start the Llama Stack server."
+
+llama-server: ## Install llama-stack and start Llama Stack server
+	@echo "==> Installing llama-stack..." && \
+	  pip install "llama-stack==0.5.0" "llama-stack-api==0.5.0" ollama && \
+	  echo "==> Killing any existing process on port 8321..." && \
+	  lsof -ti:8321 | xargs kill -9 2>/dev/null; true && \
+	  echo "==> Starting Llama Stack server on port 8321..." && \
+	  llama stack run ../../../run_llama_server.yaml
 
 run: init ## Start the local Langflow stack (Langflow + PostgreSQL + Langfuse)
 	@./deploy-local.sh
