@@ -116,7 +116,6 @@ agent_graph = None
 async def lifespan(app: FastAPI):
     """Initialize the RAG agent graph on startup and clear it on shutdown."""
     global agent_graph
-
     enable_tracing()
 
     base_url = getenv("BASE_URL")
@@ -394,7 +393,7 @@ async def health():
 # ── Playground UI ────────────────────────────────────────────────────────────
 _BASE_DIR = Path(__file__).resolve().parent
 _PLAYGROUND_HTML = _BASE_DIR / "playground" / "templates" / "index.html"
-# In Docker the images are copied to /app/images; locally they live at the repo root
+# In Docker the images are copied to /opt/app-root/src/images; locally they live at the repo root
 _IMAGES_DIR = _BASE_DIR / "images"
 if not _IMAGES_DIR.is_dir():
     _IMAGES_DIR = _BASE_DIR.parent.parent.parent / "images"
