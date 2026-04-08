@@ -58,6 +58,6 @@ if __name__ == "__main__":
         raise RuntimeError(
             "FastMCP instance has no SSE app callable (sse_app or get_sse_app)"
         )
-    port = int(getenv("PORT", 8000))
+    port = int(getenv("PORT", 8080))
     forwarded_allow_ips = getenv("UVICORN_FORWARDED_ALLOW_IPS", "*")
     uvicorn.run(app, host=_host, port=port, forwarded_allow_ips=forwarded_allow_ips)

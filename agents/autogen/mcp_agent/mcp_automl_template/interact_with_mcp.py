@@ -39,7 +39,7 @@ async def ask_question(agent, user_input: str):
 
 # Main chat loop
 async def chat_loop():
-    mcp_url = getenv("MCP_SERVER_URL", "http://127.0.0.1:8000/sse")
+    mcp_url = getenv("MCP_SERVER_URL", "http://127.0.0.1:8080/sse")
     print(mcp_url)
     async with sse_client(url=mcp_url) as (read, write):
         async with ClientSession(read, write) as session:
