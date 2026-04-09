@@ -49,7 +49,7 @@ make init        # creates .env from .env.example
 ```ini
 API_KEY=not-needed
 BASE_URL=http://localhost:11434/v1
-MODEL_ID=llama3.2:3b
+MODEL_ID=llama3.1:8b
 ```
 
 See [Local Development](../../../docs/local-development.md) for Ollama + Llama Stack setup for local model serving.

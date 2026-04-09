@@ -50,8 +50,8 @@ make env
 #### Setup Ollama
 
 This will install ollama if it is not installed already. Then pull needed models for local work.
-The default model is `llama3.2:3b`. To use a different model, pass `MODEL=`:
-`make ollama MODEL=llama3.1:8b`
+The default model is `llama3.1:8b`. To use a different model, pass `MODEL=`:
+`make ollama MODEL=llama3.2:3b`
 
 ```bash
 make ollama

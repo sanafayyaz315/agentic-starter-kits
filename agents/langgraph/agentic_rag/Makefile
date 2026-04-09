@@ -3,7 +3,8 @@ AGENT_NAME     := $(shell python3 -c "import re; print(re.search(r'^name:\s*(.+)
 CHART_DIR      := ../../../charts/agent
 VALUES_FILE    := values.yaml
 CONTAINER_CLI  := $(shell command -v podman 2>/dev/null || command -v docker 2>/dev/null)
-MODEL          ?= llama3.2:3b
+MODEL          ?= llama3.1:8b
+OLLAMA_EMBEDDING_MODEL ?= embeddinggemma:latest
 
 .PHONY: init re-init env ollama llama-server run-app run-app-fresh run-cli load-docs build push build-openshift deploy undeploy test dry-run help
 
@@ -38,12 +39,22 @@ ollama: ## Install Ollama, start it, and pull models
 	fi && \
 	  echo "==> Starting Ollama service..." && \
 	  ollama serve &>/dev/null & \
-	  echo "Waiting for Ollama to be ready..." && \
-	  until ollama list >/dev/null 2>&1; do sleep 1; done && \
+	  OLLAMA_PID=$$! && \
+	  echo "Waiting for Ollama to be ready (max 30s)..." && \
+	  OLLAMA_WAIT=0 && \
+	  until ollama list >/dev/null 2>&1; do \
+	    OLLAMA_WAIT=$$((OLLAMA_WAIT + 1)); \
+	    if [ $$OLLAMA_WAIT -ge 30 ]; then \
+	      echo "ERROR: Ollama failed to start within 30 seconds." && \
+	      kill $$OLLAMA_PID 2>/dev/null; \
+	      exit 1; \
+	    fi; \
+	    sleep 1; \
+	  done && \
 	  echo "==> Pulling $(MODEL)..." && \
 	  ollama pull $(MODEL) && \
-	  echo "==> Pulling embedding model (embeddinggemma:latest)..." && \
-	  ollama pull embeddinggemma:latest && \
+	  echo "==> Pulling embedding model ($(OLLAMA_EMBEDDING_MODEL))..." && \
+	  ollama pull $(OLLAMA_EMBEDDING_MODEL) && \
 	  echo "==> Creating Milvus dir..." && \
 	  mkdir -p ../../../milvus_data && \
 	  echo "" && \

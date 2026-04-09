@@ -80,7 +80,7 @@ def load_and_index_documents(
     # LlamaStackClient internally appends /v1, so strip it from base_url if present
     llama_base_url = base_url.rstrip("/").removesuffix("/v1")
     client = LlamaStackClient(
-        base_url=base_url,
+        base_url=llama_base_url,
         api_key=api_key,
     )
 

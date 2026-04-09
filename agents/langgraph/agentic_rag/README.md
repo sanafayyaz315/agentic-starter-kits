@@ -73,8 +73,8 @@ make env
 #### Setup Ollama
 
 This will install ollama if it is not installed already. Then pull needed models for local work.
-The default model is `llama3.2:3b`. To use a different model, pass `MODEL=`:
-`make ollama MODEL=llama3.1:8b`
+The default model is `llama3.1:8b`. To use a different model, pass `MODEL=`:
+`make ollama MODEL=llama3.2:3b`
 
 This also pulls the embedding model (`embeddinggemma:latest`) required for RAG.
 
@@ -151,17 +151,17 @@ If a LlamaStack server is already deployed on the cluster (e.g., in the `llama-s
 external route URL so both LLM and vector store operations go through LlamaStack:
 
 ```ini
-API_KEY = not-needed
-BASE_URL = https://<llamastack-route-host>/v1
-MODEL_ID = vllm//mnt/models
-CONTAINER_IMAGE = quay.io/your-username/langgraph-agentic-rag:latest
+API_KEY=not-needed
+BASE_URL=https://llamastack-route-host/v1
+MODEL_ID=vllm//mnt/models
+CONTAINER_IMAGE=quay.io/your-username/langgraph-agentic-rag:latest
 
 # RAG Configuration
-EMBEDDING_MODEL = sentence-transformers/nomic-ai/nomic-embed-text-v1.5
-EMBEDDING_DIMENSION = 768
-VECTOR_STORE_ID =
-VECTOR_STORE_PROVIDER = pgvector
-DOCS_TO_LOAD = ./data/sample_knowledge.txt
+EMBEDDING_MODEL=sentence-transformers/nomic-ai/nomic-embed-text-v1.5
+EMBEDDING_DIMENSION=768
+VECTOR_STORE_ID=
+VECTOR_STORE_PROVIDER=pgvector
+DOCS_TO_LOAD=./data/sample_knowledge.txt
 ```
 
 To discover the LlamaStack route URL and available models on your cluster:
