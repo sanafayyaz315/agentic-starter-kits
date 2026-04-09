@@ -5,8 +5,7 @@ VALUES_FILE    := values.yaml
 CONTAINER_CLI  := $(shell command -v podman 2>/dev/null || command -v docker 2>/dev/null)
 MODEL          ?= llama3.2:3b
 
-.PHONY: init re-init env ollama llama-server run-app run-app-fresh run-cli load-docs build push deploy undeploy test help
-.PHONY: init run run-cli build push build-openshift deploy undeploy test dry-run help
+.PHONY: init re-init env ollama llama-server run-app run-app-fresh run-cli load-docs build push build-openshift deploy undeploy test dry-run help
 
 help: ## Show this help
 	@grep -E '^[a-zA-Z_-]+:.*?## .*$$' $(MAKEFILE_LIST) | awk 'BEGIN {FS = ":.*?## "}; {printf "  %-14s %s\n", $$1, $$2}'
@@ -87,7 +86,6 @@ build: ## Build container image locally (podman/docker)
 	  source .env && \
 	  [ -n "$${CONTAINER_IMAGE}" ] || { echo "ERROR: CONTAINER_IMAGE is not set in .env"; exit 1; } && \
 	  rm -rf ./images && cp -r ../../../images ./images && trap 'rm -rf ./images' EXIT && \
-	  cp -r ../../../images ./images && trap 'rm -rf ./images' EXIT && \
 	  $(CONTAINER_CLI) build --platform linux/amd64 -t "$${CONTAINER_IMAGE}" -f Dockerfile .
 
 push: ## Push container image to registry
