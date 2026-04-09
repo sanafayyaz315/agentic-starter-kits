@@ -56,6 +56,15 @@ spec:
                   name: {{ include "agent.fullname" . }}-secret
                   key: mlflow-tracking-token
             {{- end }}
+            {{- range $key, $value := .Values.extraSecrets }}
+            {{- if $value }}
+            - name: {{ $key }}
+              valueFrom:
+                secretKeyRef:
+                  name: {{ include "agent.fullname" $ }}-secret
+                  key: {{ $key }}
+            {{- end }}
+            {{- end }}
           resources:
             {{- toYaml .Values.resources | nindent 12 }}
           livenessProbe:
