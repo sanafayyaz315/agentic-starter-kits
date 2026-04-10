@@ -202,7 +202,7 @@ All files that must be created or updated when integrating tracing:
 | 3 | `main.py` | **Edit** (Level B/C only) | Import `wrap_func_with_mlflow_trace`, wrap tools/agent entry points |
 | 4 | `.env.example` | **Edit** | Add local + OpenShift MLflow variable sections |
 | 5 | `README.md` | **Edit** | Add local MLflow install, local tracing config, OpenShift tracing config, MLflow server start, RHOAI install |
-| 6 | `pyproject.toml` | **Do NOT edit** | MLflow is installed manually, not listed as a dependency |
+| 6 | `pyproject.toml` | **Edit** | Add `tracing = ["mlflow>=3.10.0"]` to `[project.optional-dependencies]` |
 
 ## Summary
 

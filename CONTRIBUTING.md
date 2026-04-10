@@ -55,7 +55,7 @@ These are the files you need to create or update when adding tracing to your age
 
 **1. Create `src/<package>/tracing.py`**
 
-This module exports `enable_tracing()` (and `wrap_func_with_mlflow_trace()` if your framework's autolog doesn't cover everything). It handles health-checking the MLflow server with retry logic, configuring the experiment, enabling the correct autolog for your framework, and gracefully degrading if the server is unreachable. All MLflow imports must be lazy (inside functions, not at module top) so the agent starts cleanly without MLflow installed.
+This module exports `enable_tracing()` (and `wrap_func_with_mlflow_trace()` if your framework's autolog doesn't cover everything). It handles health-checking the MLflow server with retry logic, configuring the experiment, enabling the correct autolog for your framework, and gracefully degrading if the server is unreachable. MLflow imports are inside `enable_tracing()` (not at module top) so the module can be imported without MLflow installed — but if `MLFLOW_TRACKING_URI` is set and MLflow is missing, the agent will fail at startup with a clear error.
 
 See existing examples:
 - Full autolog (no manual wrapping needed): `agents/langgraph/react_agent/src/react_agent/tracing.py`
@@ -74,14 +74,18 @@ Add commented-out MLflow environment variable sections for both local and OpenSh
 
 Add tracing configuration examples (local and OpenShift), the `uv pip install "mlflow>=3.10.0"` install step (marked as optional), and the `mlflow server --port 5000` start step.
 
-**5. Do not add MLflow to `pyproject.toml`**
+**5. Add MLflow as an optional dependency in `pyproject.toml`**
 
-MLflow is installed manually by the user, not listed as a package dependency. This is because two different MLflow builds are used depending on the environment:
+MLflow is listed as an optional dependency under the `tracing` extra:
 
-- **Local development:** upstream MLflow (`uv pip install "mlflow>=3.10.0"`)
-- **RHOAI (Red Hat OpenAI):** Red Hat's own build (`uv pip install "git+https://github.com/red-hat-data-services/mlflow@rhoai-3.3"`)
+```toml
+[project.optional-dependencies]
+tracing = [
+    "mlflow>=3.10.0",
+]
+```
 
-The RHOAI build is not yet compatible with the upstream package, so both install paths must be supported. Listing MLflow in `pyproject.toml` would force one build and break the other. Instead, the README documents both install commands and users choose the one that matches their environment.
+This allows `make run` to auto-install MLflow when `MLFLOW_TRACKING_URI` is set (via `uv run --extra tracing`). MLflow is not a core dependency — agents run without it when tracing is disabled.
 
 ### Using the `integrate-tracing` Claude Code skill
 

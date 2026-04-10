@@ -35,25 +35,21 @@ This document covers how MLflow tracing is integrated into the agent templates i
 
 Each agent template optionally integrates with [MLflow](https://mlflow.org/) for tracing LLM calls, tool executions, and agent orchestration. Tracing is **opt-in**: if `MLFLOW_TRACKING_URI` is not set, the agent runs normally without any MLflow dependency.
 
-MLflow is intentionally **not listed** as a dependency in any agent's `pyproject.toml`. Users install it manually:
+MLflow is listed as an **optional dependency** in each agent's `pyproject.toml` under a `tracing` extra. When `MLFLOW_TRACKING_URI` is set, `make run` auto-installs it via `uv run --extra tracing`. Users can also start the MLflow server with:
 
 ```bash
-# Local development
-uv pip install "mlflow>=3.10.0"
-
-# OpenShift (RHOAI 3.2/3.3)
-uv pip install "git+https://github.com/red-hat-data-services/mlflow@rhoai-3.3"
+uv run --extra tracing mlflow server --port 5000
 ```
 
-This keeps the agent packages lightweight and avoids forcing MLflow on users who don't need tracing.
+This keeps MLflow out of the core dependencies — agents run without it when tracing is disabled.
 
 ---
 
 ## Design Principles
 
 1. **Opt-in by environment variable** — `MLFLOW_TRACKING_URI` is the single switch. No code changes needed to enable/disable tracing.
-2. **Graceful degradation** — If the MLflow server is unreachable at startup, the agent logs a warning and continues without tracing. The agent never crashes due to tracing.
-3. **Lazy imports** — `import mlflow` only happens inside `enable_tracing()` and `wrap_func_with_mlflow_trace()`, so the agent starts cleanly even if MLflow is not installed.
+2. **Graceful degradation** — If the MLflow server is unreachable at startup, the agent logs a warning and continues without tracing.
+3. **Fail-fast on missing package** — If `MLFLOW_TRACKING_URI` is set but MLflow is not installed, the agent fails at startup with a clear error. MLflow imports are inside `enable_tracing()` (not at module top) so the module can be imported without MLflow — but once tracing is requested, the package must be present.
 4. **Framework-native auto-tracing where possible** — Most frameworks have an MLflow autolog integration (`mlflow.langchain`, `mlflow.llama_index`, `mlflow.crewai`, `mlflow.openai`) that automatically captures spans. Some frameworks (Google ADK) natively emit OpenTelemetry spans instead, which MLflow ingests via OTLP.
 5. **Manual tracing only where auto-tracing falls short** — Manual `wrap_func_with_mlflow_trace()` is used only where autolog doesn't capture what's needed (e.g., Vanilla Python agent orchestration, CrewAI tool spans).
 
@@ -472,4 +468,4 @@ Google ADK's tracing uses OpenTelemetry OTLP ingestion, which is only supported 
 In addition to MLflow, Google ADK tracing requires `opentelemetry-exporter-otlp-proto-http` to be installed. Without it, `enable_tracing()` will log a warning (`"MLflow or OpenTelemetry packages not installed"`) and continue without tracing.
 
 ### MLflow must be installed if `MLFLOW_TRACKING_URI` is set
-The tracing code uses lazy imports (`import mlflow` inside functions), so the agent starts fine without MLflow installed. But if `MLFLOW_TRACKING_URI` is set, `enable_tracing()` will `import mlflow` and fail with `ImportError` if the package isn't installed. The agent will crash at startup in this case.
+MLflow imports are inside `enable_tracing()`, so the agent starts fine without MLflow when `MLFLOW_TRACKING_URI` is not set. But if the URI is set, `enable_tracing()` will fail at startup with a clear `ModuleNotFoundError` telling the user to install MLflow. This is intentional — silently skipping tracing when the user explicitly requested it would hide a misconfiguration.

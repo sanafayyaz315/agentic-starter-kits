@@ -101,9 +101,9 @@ Read `<agent_path>/README.md` and verify:
 - [ ] **MLflow server start** — `mlflow server --port 5000` step in the Local Usage section
 - [ ] **RHOAI MLflow install** — `uv pip install "git+https://github.com/red-hat-data-services/mlflow@rhoai-3.3"` in the OpenShift Deployment section (marked as optional)
 
-### 7. `pyproject.toml` does NOT list MLflow
+### 7. `pyproject.toml` lists MLflow as optional
 
-- [ ] `mlflow` is NOT in `dependencies` or `optional-dependencies` — it is installed manually per README instructions
+- [ ] `mlflow>=3.10.0` is in `[project.optional-dependencies]` under a `tracing` extra — NOT in core `dependencies`
 
 ## Output
 
