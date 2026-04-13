@@ -133,7 +133,7 @@ If verification fails, the report will indicate which step to revisit.
 Add the following sections to the agent's `.env.example` file (if not already present):
 
 ```ini
-## LOCAL TRACING
+# LOCAL TRACING
 
 # MLFLOW_TRACKING_URI=
 # MLFLOW_EXPERIMENT_NAME=
@@ -175,14 +175,9 @@ Add these sections to the agent's `README.md` (use an existing agent like `langg
      - `MLFLOW_HEALTH_CHECK_TIMEOUT` controls wait time (default: 5s)
 
 3. **Local MLflow install** — in the Local Usage section, after `uv pip install -e .`, add:
-   ```bash
-   uv pip install "mlflow>=3.10.0"
-   ```
-   with a note: *Optional: Only required if tracing is enabled*
-
 4. **MLflow server start** — in the Local Usage section, add a step to start the MLflow server:
    ```bash
-   mlflow server --port 5000
+   uv run --extra tracing mlflow server --port 5000
    ```
 
 ## Complete Checklist

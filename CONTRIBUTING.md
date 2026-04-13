@@ -98,13 +98,13 @@ If you have [Claude Code](https://docs.anthropic.com/en/docs/claude-code) set up
 
 #### Running the full integration
 
-```
+```text
 /project:integrate-tracing <framework> <agent_path>
 ```
 
 For example:
 
-```
+```text
 /project:integrate-tracing autogen agents/autogen/chat_agent
 ```
 
@@ -126,7 +126,7 @@ This single command runs the entire pipeline end-to-end. The skill always create
 
 Each step of the pipeline is also available as a standalone skill. This is useful if you want to run just one phase, re-run a step after a fix, or integrate tracing manually with some automation:
 
-```
+```text
 /project:check-autolog-support <framework>         # Research MLflow autolog support for a framework
 /project:create-tracing-module <agent_path>         # Create tracing.py only
 /project:wire-into-lifespan <agent_path>            # Wire tracing into main.py only

@@ -110,7 +110,7 @@ Read `<agent_path>/README.md` and verify:
 
 ## Output
 
-```
+```text
 ## Code Review Report: <agent_name>
 
 ### tracing.py

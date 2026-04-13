@@ -143,6 +143,7 @@ This agent has no framework-level orchestration, so autolog only captures raw Op
   ```
 
 **Resulting spans:**
+
 | Span Name | Type | Source |
 |---|---|---|
 | `query` | AGENT | Manual (`wrap_func_with_mlflow_trace`) |
@@ -157,6 +158,7 @@ This agent has no framework-level orchestration, so autolog only captures raw Op
 LangChain's autolog captures the full execution graph including LLM calls, tool calls, and agent orchestration. Works with both `ainvoke` (non-streaming) and `astream_events` (streaming).
 
 **Resulting spans:**
+
 | Span Name | Type | Source |
 |---|---|---|
 | `LangGraph` | CHAIN | `mlflow.langchain.autolog()` |
@@ -174,6 +176,7 @@ No `LLM_PROVIDER` env var needed — `ChatOpenAI` is a LangChain component and i
 LlamaIndex's autolog captures the full workflow including agent runs, LLM chats, and tool calls.
 
 **Resulting spans:**
+
 | Span Name | Type | Source |
 |---|---|---|
 | `FunctionCallingAgent.run` | CHAIN | `mlflow.llama_index.autolog()` |
@@ -217,6 +220,7 @@ The `LLM_PROVIDER` env var controls which autolog is enabled:
 - `openai/my-custom-model` (unrecognized) -> base `LLM` class (LiteLLM fallback)
 
 **Resulting spans:**
+
 | Span Name | Type | Source |
 |---|---|---|
 | `CrewAI` | AGENT | `mlflow.crewai.autolog()` |
@@ -262,6 +266,7 @@ trace.set_tracer_provider(provider)
 The `TracerProvider` must be set **before** any ADK components are used (i.e., `enable_tracing()` is called first in the lifespan, before `get_runner()`).
 
 **Resulting spans:**
+
 | Span Name | Type | Source |
 |---|---|---|
 | `invocation` | — | ADK OTel (top-level request) |
