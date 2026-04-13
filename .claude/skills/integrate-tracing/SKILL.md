@@ -197,6 +197,7 @@ All files that must be created or updated when integrating tracing:
 | 4 | `.env.example` | **Edit** | Add local + OpenShift MLflow variable sections |
 | 5 | `README.md` | **Edit** | Add local tracing config, OpenShift tracing config, MLflow server start |
 | 6 | `pyproject.toml` | **Edit** | Add `tracing = ["mlflow>=3.10.0"]` to `[project.optional-dependencies]` |
+| 7 | `Makefile` | **Edit** | Add `$${MLFLOW_TRACKING_URI:+--extra tracing}` to `uv run` in `run` and `run-cli` targets |
 
 ## Summary
 

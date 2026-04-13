@@ -103,6 +103,11 @@ Read `<agent_path>/README.md` and verify:
 
 - [ ] `mlflow>=3.10.0` is in `[project.optional-dependencies]` under a `tracing` extra — NOT in core `dependencies`
 
+### 8. `Makefile` auto-installs MLflow when tracing is enabled
+
+- [ ] `run` target uses `$${MLFLOW_TRACKING_URI:+--extra tracing}` in the `uv run` command
+- [ ] `run-cli` target (if it exists) uses the same flag
+
 ## Output
 
 ```
@@ -136,7 +141,11 @@ Read `<agent_path>/README.md` and verify:
 - Issues: <list or "None">
 
 ### pyproject.toml
-- MLflow NOT in dependencies: YES / NO
+- MLflow in optional tracing extra: YES / NO
+
+### Makefile
+- run target has --extra tracing flag: YES / NO
+- run-cli target has --extra tracing flag: YES / NO / N/A
 
 ### Overall: PASS / FAIL
 ```
