@@ -1,6 +1,6 @@
 # Agentic Starter Kits
 
-Collection of production-ready LLM agent templates for Red Hat OpenShift. 11 agents across 8 framework categories (LangGraph, LlamaIndex, CrewAI, AutoGen, Langflow, Google ADK, A2A, Vanilla Python), all sharing a common FastAPI API contract and Helm-based deployment.
+Collection of production-ready LLM agent templates for Red Hat OpenShift. 11 agents across 8 framework categories (LangGraph, LlamaIndex, CrewAI, AutoGen, Langflow, Google ADK, A2A, Vanilla Python). Most agents share a common FastAPI API contract and Helm-based deployment; see [Non-standard agents](#non-standard-agents) for exceptions.
 
 ## Quick reference
 
