@@ -97,9 +97,7 @@ Read `<agent_path>/README.md` and verify:
 
 - [ ] **Local tracing config** — `##### Tracing` subsection under Local `.env` config with example MLflow env vars
 - [ ] **OpenShift tracing config** — `##### Tracing` subsection under OpenShift `.env` config with variable explanations and behavioral notes (optional, graceful degradation, health check timeout)
-- [ ] **Local MLflow install** — `uv pip install "mlflow>=3.10.0"` step after `uv pip install -e .` (marked as optional)
-- [ ] **MLflow server start** — `mlflow server --port 5000` step in the Local Usage section
-- [ ] **RHOAI MLflow install** — `uv pip install "git+https://github.com/red-hat-data-services/mlflow@rhoai-3.3"` in the OpenShift Deployment section (marked as optional)
+- [ ] **MLflow server start** — `uv run --extra tracing mlflow server --port 5000` step in the Local Usage section
 
 ### 7. `pyproject.toml` lists MLflow as optional
 
@@ -134,9 +132,7 @@ Read `<agent_path>/README.md` and verify:
 ### README.md
 - Local tracing config: YES / NO
 - OpenShift tracing config: YES / NO
-- Local MLflow install step: YES / NO
 - MLflow server start step: YES / NO
-- RHOAI MLflow install step: YES / NO
 - Issues: <list or "None">
 
 ### pyproject.toml

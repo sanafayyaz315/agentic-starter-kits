@@ -185,12 +185,6 @@ Add these sections to the agent's `README.md` (use an existing agent like `langg
    mlflow server --port 5000
    ```
 
-5. **RHOAI MLflow install** — in the OpenShift Deployment section, add:
-   ```bash
-   uv pip install "git+https://github.com/red-hat-data-services/mlflow@rhoai-3.3"
-   ```
-   with a note: *Optional: Only required if tracing is enabled*
-
 ## Complete Checklist
 
 All files that must be created or updated when integrating tracing:
@@ -201,7 +195,7 @@ All files that must be created or updated when integrating tracing:
 | 2 | `main.py` | **Edit** | Import `enable_tracing`, call it first in `lifespan()` |
 | 3 | `main.py` | **Edit** (Level B/C only) | Import `wrap_func_with_mlflow_trace`, wrap tools/agent entry points |
 | 4 | `.env.example` | **Edit** | Add local + OpenShift MLflow variable sections |
-| 5 | `README.md` | **Edit** | Add local MLflow install, local tracing config, OpenShift tracing config, MLflow server start, RHOAI install |
+| 5 | `README.md` | **Edit** | Add local tracing config, OpenShift tracing config, MLflow server start |
 | 6 | `pyproject.toml` | **Edit** | Add `tracing = ["mlflow>=3.10.0"]` to `[project.optional-dependencies]` |
 
 ## Summary

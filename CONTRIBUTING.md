@@ -72,7 +72,7 @@ Add commented-out MLflow environment variable sections for both local and OpenSh
 
 **4. Edit `README.md`**
 
-Add tracing configuration examples (local and OpenShift), the `uv pip install "mlflow>=3.10.0"` install step (marked as optional), and the `mlflow server --port 5000` start step.
+Add tracing configuration examples (local and OpenShift) and the `uv run --extra tracing mlflow server --port 5000` server start step.
 
 **5. Add MLflow as an optional dependency in `pyproject.toml`**
 
