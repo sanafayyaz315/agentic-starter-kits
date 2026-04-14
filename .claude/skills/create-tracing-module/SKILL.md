@@ -18,7 +18,7 @@ The agent path is: $ARGUMENTS
 
 You also need the **framework name** (e.g., `autogen`, `langgraph`, `crewai`) and the **autolog support report** (which classifies the framework as Level A, B, or C). The framework may be included as a second word in `$ARGUMENTS`. If not provided, determine it from the agent's `pyproject.toml` dependencies.
 
-If the autolog report is not available in the current conversation context, read and follow `.claude/skills/check-autolog-support/SKILL.md` with the framework name to produce the report before continuing.
+If the autolog report is not available in the current conversation context, read and follow check-autolog-support skill from `.claude/skills/check-autolog-support/SKILL.md` with the framework name to produce the report before continuing.
 
 ## Context
 
