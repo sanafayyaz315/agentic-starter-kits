@@ -1,6 +1,6 @@
 # Agentic Starter Kits
 
-Collection of production-ready LLM agent templates for Red Hat OpenShift. 11 agents across 8 framework categories (LangGraph, LlamaIndex, CrewAI, AutoGen, Langflow, Google ADK, A2A, Vanilla Python). Most agents share a common FastAPI API contract and Helm-based deployment; see [Non-standard agents](#non-standard-agents) for exceptions.
+Collection of production-ready LLM agent templates for Red Hat OpenShift, spanning multiple frameworks (LangGraph, LlamaIndex, CrewAI, AutoGen, Langflow, Google ADK, and more). See `agents/` for the full list. Most agents share a common FastAPI API contract and Helm-based deployment; see [Non-standard agents](#non-standard-agents) for exceptions.
 
 ## Quick reference
 
@@ -13,7 +13,7 @@ make env           # create venv + install deps with uv
 make run-app       # start FastAPI dev server on PORT (default 8000)
 make test          # run pytest
 make dry-run       # preview Helm manifests without deploying
-make build         # build container image locally(podman/docker)
+make build         # build container image locally (podman/docker)
 make push          # pushes to the registry specified in CONTAINER_IMAGE
 make deploy        # deploy to OpenShift/K8s via Helm
 ```
@@ -34,6 +34,23 @@ make deploy        # deploy to OpenShift/K8s via Helm
 - Source code lives in `src/<agent_name>/` within each agent directory
 - Keep agent implementations self-contained — never import from another agent's `src/` directory
 
+## Workflow
+
+- When modifying an agent, `cd` into its directory first — Makefiles use relative paths and read `agent.yaml` at runtime
+- Reference `agent.yaml` to discover required env vars before editing `.env.example`
+- Prefer `make test` over running pytest directly to ensure correct environment setup
+- After editing Dockerfiles, verify the build with `make build` when possible
+- For cross-agent investigations, use parallel or subagent workflows to keep context clean
+- If an agent has no tests (empty `tests/` or no `test` target), note it — don't fabricate a passing result
+
+## Boundaries
+
+- Don't modify `charts/agent/` templates unless the change is explicitly requested
+- Don't modify CONTRIBUTING.md, CI config, or root Makefile without asking
+- When working on one agent, don't refactor other agents
+- Don't change the API contract (`POST /chat/completions`, `GET /health`) without discussion
+- When unsure if an agent follows the standard pattern, check its Makefile and Dockerfile first
+
 ## Commit conventions
 
 See CONTRIBUTING.md for full details. Conventional Commits encouraged:
@@ -49,7 +66,7 @@ See CONTRIBUTING.md for full details. Conventional Commits encouraged:
 - Branch naming: `feat/<description>`, `fix/<description>`
 - Always fetch the latest main before rebasing: `git fetch upstream main` (fork) or `git fetch origin main` (direct)
 
-## Container conventions
+## Container conventions (standard agents)
 
 - Base image: `registry.access.redhat.com/ubi9/python-312` (never Docker Hub base images — avoids rate limits on OpenShift)
 - Non-root user: UID 1001, GID 0 (OpenShift arbitrary UID support)
@@ -100,10 +117,10 @@ Most agents follow the standard pattern (FastAPI, UBI9 container, shared Helm ch
 
 ### langflow/simple_tool_calling_agent
 
-- **Architecture**: Docker Compose-based flow-import deployment, not a standalone FastAPI app
+- **Architecture**: Podman Compose-based flow-import deployment, not a standalone FastAPI app
 - **No Dockerfile, pyproject.toml, main.py, src/, or tests/**
 - **Makefile targets differ**: `init`, `ollama`, `llama-server`, `run`, `stop`, `clean`, `status`, `logs` (not the standard set)
-- **Environment variables**: Infra-only (PostgreSQL, Ollama) — does not use `API_KEY`, `BASE_URL`, `MODEL_ID`
+- **Environment variables**: Infra-only (PostgreSQL, Langfuse, Ollama) — does not use `API_KEY`, `BASE_URL`, `MODEL_ID`
 
 ### a2a/langgraph_crewai_agent
 
@@ -111,7 +128,8 @@ Most agents follow the standard pattern (FastAPI, UBI9 container, shared Helm ch
 - **PYTHONPATH**: `/app` instead of `/opt/app-root/src`
 - **Helm chart**: Uses `charts/a2a-langgraph-crewai/` instead of `charts/agent/`
 - **No tests/ directory or `test` Makefile target**
-- **No `.env.example`** — configure env vars manually
+- **No `.env.example`** — uses `template.env` instead
+- **Uses `entrypoint.sh`** instead of `main.py` — conditionally launches modules based on `A2A_ROLE`
 - **Uses Starlette** instead of FastAPI (still exposes the same API contract)
 
 ## When validation fails
