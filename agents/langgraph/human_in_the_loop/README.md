@@ -50,6 +50,73 @@ make init
 
 Edit `.env` with your configuration, then:
 
+```ini
+API_KEY=not-needed
+BASE_URL=http://localhost:8321/v1
+MODEL_ID=ollama/llama3.2:3b
+```
+
+See [Local Development](../../../docs/local-development.md) for Ollama + Llama Stack setup for local model serving.
+
+#### Pointing to a remotely hosted model
+
+```ini
+API_KEY=your-api-key-here
+BASE_URL=https://your-model-endpoint.com/v1
+MODEL_ID=llama-3.1-8b-instruct
+```
+
+**Notes:**
+
+- `API_KEY` - your API key or contact your cluster administrator
+- `BASE_URL` - should end with `/v1`
+- `MODEL_ID` - model identifier available on your endpoint
+
+### Tracing (optional)
+
+#### Tracing with a local MLflow server
+
+To enable MLflow tracing, add the following to your `.env`:
+
+```ini
+MLFLOW_TRACKING_URI="http://localhost:5000"
+MLFLOW_EXPERIMENT_NAME="langgraph-hitl-agent"
+MLFLOW_HTTP_REQUEST_TIMEOUT=2
+MLFLOW_HTTP_REQUEST_MAX_RETRIES=0
+```
+
+Then start the MLflow server in a separate terminal:
+
+```bash
+# Start the MLflow server
+uv run --extra tracing mlflow server --port 5000
+```
+
+#### Tracing with an OpenShift MLflow server
+
+To enable tracing and logging with MLflow on your OpenShift cluster, add the following environment variables to your `.env` file:
+
+```ini
+MLFLOW_TRACKING_URI="https://<openshift-dashboard-url>/mlflow"
+MLFLOW_TRACKING_TOKEN="<your-openshift-token>"
+MLFLOW_EXPERIMENT_NAME="langgraph-hitl-agent"
+MLFLOW_TRACKING_INSECURE_TLS="true"
+MLFLOW_WORKSPACE="default"
+```
+
+**Notes:**
+- `MLFLOW_TRACKING_URI` - Replace `<openshift-dashboard-url>` with your OpenShift cluster's data science gateway URL
+- `MLFLOW_TRACKING_TOKEN` - Your openshift authentication token. It can be obtained from the openshift console.
+- `MLFLOW_EXPERIMENT_NAME` - A descriptive name for your experiment (e.g., "LangGraph HITL Demo")
+- `MLFLOW_TRACKING_INSECURE_TLS` - Set to `"true"` if your OpenShift cluster does not use trusted certificates
+- `MLFLOW_WORKSPACE` - Project name
+
+- Tracing is optional; if you do not set `MLFLOW_TRACKING_URI`, the application will run without MLflow logging.
+
+- If `MLFLOW_TRACKING_URI` is set, the application will attempt to connect to the MLflow server at startup. If the server is unreachable, the application will log a warning and continue running without tracing.
+
+- You can control how long the application waits for the MLflow server by setting `MLFLOW_HEALTH_CHECK_TIMEOUT` (in seconds, default: `5`).
+
 #### Creating environment
 
 Now you will remove old .venv and create new. Next dependencies will be installed.
