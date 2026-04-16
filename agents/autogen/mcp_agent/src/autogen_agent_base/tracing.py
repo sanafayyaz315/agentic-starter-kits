@@ -1,6 +1,5 @@
 from os import getenv
 import time
-import requests
 from dotenv import load_dotenv
 from typing import Optional
 
@@ -24,6 +23,7 @@ def check_mlflow_health(mlflow_tracking_uri: str, max_wait_time: int = 5, retry_
         max_wait_time: total time to keep retrying before giving up (in seconds)
         retry_interval: time to wait between retries (in seconds)
     """
+    import requests
     mlflow_health_endpoint = "/health"
     mlflow_url = f"{mlflow_tracking_uri.rstrip('/')}{mlflow_health_endpoint}"
     start_time = time.time()
@@ -69,8 +69,14 @@ def enable_tracing() -> None:
         logger.info("[Tracing] MLFLOW_TRACKING_URI not set. Tracing is disabled.")
         return
 
-    import mlflow
-    import mlflow.autogen
+    try:
+        import mlflow
+        import mlflow.autogen
+    except ModuleNotFoundError as e:
+        raise ModuleNotFoundError(
+            "MLFLOW_TRACKING_URI is set but mlflow is not installed. "
+            "Install it with: uv sync --extra tracing'"
+        ) from e
 
     # Check if server is reachable
     try:
@@ -88,18 +94,24 @@ def enable_tracing() -> None:
         return
 
     # Server is reachable → enable tracing
-    mlflow.set_tracking_uri(tracking_uri)
-    experiment_name: str = getenv("MLFLOW_EXPERIMENT_NAME", "default-agent-experiment")
-    mlflow.set_experiment(experiment_name)
-    mlflow.config.enable_async_logging()
+    try:
+        mlflow.set_tracking_uri(tracking_uri)
+        experiment_name: str = getenv("MLFLOW_EXPERIMENT_NAME", "default-agent-experiment")
+        mlflow.set_experiment(experiment_name)
+        mlflow.config.enable_async_logging()
 
-    mlflow.autogen.autolog()
+        mlflow.autogen.autolog()
 
-    # Patch _execute_tool_call to add TOOL spans. mlflow.autogen.autolog() does
-    # not trace tool execution — only the LLM's function_call request.
-    _patch_execute_tool_call()
+        # Patch _execute_tool_call to add TOOL spans. mlflow.autogen.autolog() does
+        # not trace tool execution — only the LLM's function_call request.
+        _patch_execute_tool_call()
 
-    logger.info(f"[Tracing Enabled] MLflow -> {tracking_uri}, Experiment: {experiment_name}")
+        logger.info(f"[Tracing Enabled] MLflow -> {tracking_uri}, Experiment: {experiment_name}")
+    except Exception as e:
+        logger.warning(
+            f"[Tracing] Failed to configure MLflow tracing at {tracking_uri}. "
+            f"Continuing without tracing. Error: {e}"
+        )
 
 
 def _patch_execute_tool_call() -> None:

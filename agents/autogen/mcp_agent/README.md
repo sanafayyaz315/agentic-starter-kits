@@ -157,15 +157,19 @@ MLFLOW_WORKSPACE="default"
 
 #### Streaming and tracing
 
-`mlflow.autogen.autolog()` does not support AutoGen's streaming APIs (`run_stream`, `create_stream`) as of now. Because of this, `MODEL_CLIENT_STREAM` defaults to `false` to ensure complete MLflow traces (AGENT, LLM, and TOOL spans).
+`mlflow.autogen.autolog()` does not support AutoGen's streaming APIs (`run_stream`, `create_stream`) as of now. To handle this, streaming is **auto-detected**:
 
-With this setting, the **playground UI will not display responses** because it relies on streaming. To make the playground work, set in your `.env`:
+- When `MLFLOW_TRACKING_URI` is **not set** → streaming is enabled (playground works)
+- When `MLFLOW_TRACKING_URI` is **set** → streaming is disabled (complete MLflow traces)
+
+You can always override this by setting `MODEL_CLIENT_STREAM` explicitly in your `.env`:
 
 ```ini
-MODEL_CLIENT_STREAM=true
+MODEL_CLIENT_STREAM=true   # force streaming on (playground works, traces incomplete)
+MODEL_CLIENT_STREAM=false  # force streaming off (complete traces, playground won't display responses)
 ```
 
-However, when `MODEL_CLIENT_STREAM=true`, traces will be incomplete — LLM spans will be missing and remaining spans (TOOL) will be orphaned without a parent AGENT span. Once MLflow adds native support for AutoGen streaming, traces will work automatically without any code changes.
+When streaming is enabled, traces will be incomplete — LLM spans will be missing and remaining spans (TOOL) will be orphaned without a parent AGENT span. Once MLflow adds native support for AutoGen streaming, traces will work automatically without any code changes.
 
 ### Running the Agent
 
