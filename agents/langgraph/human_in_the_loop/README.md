@@ -39,44 +39,20 @@ User Input → LLM decides tool → Is it sensitive?
 
 ## Local Development
 
-#### Initiating base
+### Initiating base
 
-Here you copy .env.example file into .env
+`make init` creates a `.env` file from `.env.example`. Set your environment variables in the `.env` file.
 
 ```bash
 cd agents/langgraph/human_in_the_loop
 make init
 ```
 
-Edit `.env` with your configuration, then:
-
-```ini
-API_KEY=not-needed
-BASE_URL=http://localhost:8321/v1
-MODEL_ID=ollama/llama3.2:3b
-```
-
-See [Local Development](../../../docs/local-development.md) for Ollama + Llama Stack setup for local model serving.
-
-#### Pointing to a remotely hosted model
-
-```ini
-API_KEY=your-api-key-here
-BASE_URL=https://your-model-endpoint.com/v1
-MODEL_ID=llama-3.1-8b-instruct
-```
-
-**Notes:**
-
-- `API_KEY` - your API key or contact your cluster administrator
-- `BASE_URL` - should end with `/v1`
-- `MODEL_ID` - model identifier available on your endpoint
-
 ### Tracing (optional)
 
-#### Tracing with a local MLflow server
+Tracing is optional. If MLflow tracing is required, enable it by uncommenting and setting the following environment variables in the `.env` file.
 
-To enable MLflow tracing, add the following to your `.env`:
+#### Tracing with a local MLflow server
 
 ```ini
 MLFLOW_TRACKING_URI="http://localhost:5000"
@@ -92,6 +68,8 @@ Then start the MLflow server in a separate terminal:
 uv run --extra tracing mlflow server --port 5000
 ```
 
+When `MLFLOW_TRACKING_URI` is set, `make run-app` and `make run-cli` will automatically install the tracing dependency.
+
 #### Tracing with an OpenShift MLflow server
 
 To enable tracing and logging with MLflow on your OpenShift cluster, add the following environment variables to your `.env` file:
@@ -105,11 +83,11 @@ MLFLOW_WORKSPACE="default"
 ```
 
 **Notes:**
-- `MLFLOW_TRACKING_URI` - Replace `<openshift-dashboard-url>` with your OpenShift cluster's data science gateway URL
-- `MLFLOW_TRACKING_TOKEN` - Your openshift authentication token. It can be obtained from the openshift console.
+- `MLFLOW_TRACKING_URI` - URL of your MLflow server. For local development, use `http://localhost:5000`. If using MLflow on an OpenShift cluster, replace `<openshift-dashboard-url>` with your cluster's data science gateway URL.
+- `MLFLOW_TRACKING_TOKEN` - Required for OpenShift only. Your OpenShift authentication token, obtained from the OpenShift console.
 - `MLFLOW_EXPERIMENT_NAME` - A descriptive name for your experiment (e.g., "LangGraph HITL Demo")
-- `MLFLOW_TRACKING_INSECURE_TLS` - Set to `"true"` if your OpenShift cluster does not use trusted certificates
-- `MLFLOW_WORKSPACE` - Project name
+- `MLFLOW_TRACKING_INSECURE_TLS` - Required for OpenShift only. Set to `"true"` if your cluster does not use trusted certificates.
+- `MLFLOW_WORKSPACE` - Required for OpenShift only. Project name.
 
 - Tracing is optional; if you do not set `MLFLOW_TRACKING_URI`, the application will run without MLflow logging.
 
@@ -117,7 +95,7 @@ MLFLOW_WORKSPACE="default"
 
 - You can control how long the application waits for the MLflow server by setting `MLFLOW_HEALTH_CHECK_TIMEOUT` (in seconds, default: `5`).
 
-#### Creating environment
+### Creating environment
 
 Now you will remove old .venv and create new. Next dependencies will be installed.
 
@@ -125,7 +103,7 @@ Now you will remove old .venv and create new. Next dependencies will be installe
 make env
 ```
 
-#### Setup Ollama
+### Setup Ollama
 
 This will install ollama if it is not installed already. Then pull needed models for local work.
 The default model is `llama3.1:8b`. To use a different model, pass `MODEL=`:
@@ -135,7 +113,7 @@ The default model is `llama3.1:8b`. To use a different model, pass `MODEL=`:
 make ollama
 ```
 
-#### Run llama server
+### Run llama server
 
 > **Keep this terminal open** – the server needs to keep running.
 > You should see output indicating the server started on `http://localhost:8321`.
@@ -144,7 +122,7 @@ make ollama
 make llama-server
 ```
 
-#### Run the interactive web application
+### Run the interactive web application
 
 > **Keep this terminal open** – the app needs to keep running.
 > You should see output indicating the app started on `http://localhost:8000`.
@@ -159,7 +137,7 @@ connected and ready.
 
 When the agent pauses for approval, an **Approve / Reject** banner appears directly in the chat.
 
-#### Interactive CLI
+### Interactive CLI
 
 For terminal-based testing without a browser:
 
