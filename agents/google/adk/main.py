@@ -14,6 +14,7 @@ from pydantic import BaseModel, Field
 logger = logging.getLogger(__name__)
 
 from adk_agent.agent import get_runner, APP_NAME
+from adk_agent.tracing import enable_tracing
 
 
 # OpenAI-compatible request/response models
@@ -117,6 +118,8 @@ USER_ID = "api_user"
 async def lifespan(app: FastAPI):
     """Initialize the ADK agent runner on startup and clear it on shutdown."""
     global runner
+
+    enable_tracing()
 
     base_url = getenv("BASE_URL")
     model_id = getenv("MODEL_ID")

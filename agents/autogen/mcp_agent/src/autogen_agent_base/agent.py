@@ -44,7 +44,10 @@ def get_agent_chat(
             model_client=model_client,
             tools=effective_tools,
             system_message=system_prompt,
-            model_client_stream=True,
+            # Set to True for real token-by-token streaming responses.
+            # Note: model_client_stream=True routes LLM calls through create_stream(),
+            # which mlflow.autogen.autolog() does not trace — LLM spans will be missing.
+            model_client_stream=False,
             reflect_on_tool_use=True,
         )
 

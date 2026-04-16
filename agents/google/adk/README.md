@@ -66,6 +66,60 @@ make ollama
 make llama-server
 ```
 
+### Tracing (optional)
+
+#### Tracing with a local MLflow server
+
+To enable MLflow tracing, first install MLflow and the OpenTelemetry OTLP exporter:
+
+```bash
+uv pip install "mlflow>=3.10.0" opentelemetry-exporter-otlp-proto-http
+```
+
+> Google ADK emits OpenTelemetry spans natively for agent runs, tool calls, and model requests. The `opentelemetry-exporter-otlp-proto-http` package is needed to forward those spans to MLflow.
+
+Add the following to your `.env`:
+
+```ini
+MLFLOW_TRACKING_URI="http://localhost:5000"
+MLFLOW_EXPERIMENT_NAME="Google ADK Local Experiment"
+MLFLOW_HTTP_REQUEST_TIMEOUT=2
+MLFLOW_HTTP_REQUEST_MAX_RETRIES=0
+```
+
+Then start the MLflow server in a separate terminal. **Important:** Google ADK's OpenTelemetry integration requires a SQL-based backend store:
+
+```bash
+mlflow server --backend-store-uri sqlite:///mlflow.db --port 5000
+```
+
+> A file-based backend (`mlflow server --port 5000` without `--backend-store-uri`) does **not** support OpenTelemetry ingestion.
+
+#### Tracing with an OpenShift MLflow server
+
+To enable tracing and logging with MLflow on your OpenShift cluster, add the following environment variables to your `.env` file:
+
+```ini
+MLFLOW_TRACKING_URI="https://<openshift-dashboard-url>/mlflow"
+MLFLOW_TRACKING_TOKEN="<your-openshift-token>"
+MLFLOW_EXPERIMENT_NAME="Google ADK Experiment"
+MLFLOW_TRACKING_INSECURE_TLS="true"
+MLFLOW_WORKSPACE="default"
+```
+
+**Notes:**
+- `MLFLOW_TRACKING_URI` - Replace `<openshift-dashboard-url>` with your OpenShift cluster's data science gateway URL
+- `MLFLOW_TRACKING_TOKEN` - Your OpenShift authentication token. It can be obtained from the OpenShift console.
+- `MLFLOW_EXPERIMENT_NAME` - A descriptive name for your experiment (e.g., "Google ADK Agent")
+- `MLFLOW_TRACKING_INSECURE_TLS` - Set to `"true"` if your OpenShift cluster does not use trusted certificates
+- `MLFLOW_WORKSPACE` - Project name
+
+- Tracing is optional; if you do not set `MLFLOW_TRACKING_URI`, the application will run without MLflow logging.
+
+- If `MLFLOW_TRACKING_URI` is set, the application will attempt to connect to the MLflow server at startup. If the server is unreachable, the application will log a warning and continue running without tracing.
+
+- You can control how long the application waits for the MLflow server by setting `MLFLOW_HEALTH_CHECK_TIMEOUT` (in seconds, default: `5`).
+
 #### Run the interactive web application
 
 > **Keep this terminal open** – the app needs to keep running.
@@ -124,6 +178,12 @@ CONTAINER_IMAGE = quay.io/your-username/google-adk-agent:latest
   > **Note:** OpenShift must be able to pull the container image. Make the image **public**, or configure
   an [image pull secret](https://docs.openshift.com/container-platform/latest/openshift_images/managing_images/using-image-pull-secrets.html)
   for private registries.
+
+*Optional: Only required if tracing is enabled*
+
+```bash
+uv pip install "mlflow>=3.10.0" opentelemetry-exporter-otlp-proto-http
+```
 
 ### Building the Container Image
 
