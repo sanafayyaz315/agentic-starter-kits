@@ -176,28 +176,19 @@ Add the following sections to the agent's `.env.example` file (if not already pr
 
 **Goal**: Document tracing setup for both local and OpenShift deployments.
 
-Add these sections to the agent's `README.md` (use an existing agent like `langgraph/react_agent` as reference):
+Find an existing agent README that already has a `### Tracing (optional)` section and use it as a reference for structure, content, and tone. Add a `### Tracing (optional)` section to the new agent's `README.md` with:
 
-1. **Local Tracing config** — under the Local `.env` configuration section, add a `##### Tracing` subsection with example MLflow env vars:
-   ```ini
-   MLFLOW_TRACKING_URI="http://localhost:5000"
-   MLFLOW_EXPERIMENT_NAME="<Agent Name> Local Experiment"
-   MLFLOW_HTTP_REQUEST_TIMEOUT=2
-   MLFLOW_HTTP_REQUEST_MAX_RETRIES=0
-   ```
+1. **Local MLflow config** — example env vars for local development (`MLFLOW_TRACKING_URI`, `MLFLOW_EXPERIMENT_NAME`, `MLFLOW_HTTP_REQUEST_TIMEOUT`, `MLFLOW_HTTP_REQUEST_MAX_RETRIES`)
+2. **MLflow server start** — command to start the MLflow server: `uv run --extra tracing mlflow server --port 5000`
+3. **A note** that `make run` (or equivalent) will automatically install the tracing dependency when `MLFLOW_TRACKING_URI` is set
+4. **OpenShift MLflow config** — example env vars for OpenShift deployment (`MLFLOW_TRACKING_URI`, `MLFLOW_TRACKING_TOKEN`, `MLFLOW_EXPERIMENT_NAME`, `MLFLOW_TRACKING_INSECURE_TLS`, `MLFLOW_WORKSPACE`)
+5. **Notes** explaining each variable, clarifying which are OpenShift-only
+6. **Behavioral notes**:
+   - If `MLFLOW_TRACKING_URI` is not set, the app runs without tracing
+   - If set but the server is unreachable, the app logs a warning and continues without tracing
+   - `MLFLOW_HEALTH_CHECK_TIMEOUT` controls wait time (default: 5s)
 
-2. **OpenShift Tracing config** — under the OpenShift `.env` configuration section, add a `##### Tracing` subsection with:
-   - Example env vars (`MLFLOW_TRACKING_URI`, `MLFLOW_TRACKING_TOKEN`, `MLFLOW_EXPERIMENT_NAME`, `MLFLOW_TRACKING_INSECURE_TLS`, `MLFLOW_WORKSPACE`)
-   - Notes explaining each variable
-   - Three behavioral notes:
-     - Tracing is optional; if `MLFLOW_TRACKING_URI` is not set, the app runs without MLflow logging
-     - If set but unreachable, the app logs a warning and continues without tracing
-     - `MLFLOW_HEALTH_CHECK_TIMEOUT` controls wait time (default: 5s)
-
-3. **MLflow server start** — in the Local Usage section, add a step to start the MLflow server (this also installs MLflow as an optional dependency):
-   ```bash
-   uv run --extra tracing mlflow server --port 5000
-   ```
+Place the section where it makes sense in the README's flow — typically as part of the `.env` configuration phase, before the environment setup or run steps. Do not use a fixed position; adapt to the README's existing structure.
 
 ### Step 11: Update Dockerfile
 

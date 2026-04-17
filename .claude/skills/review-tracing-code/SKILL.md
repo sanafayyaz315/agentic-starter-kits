@@ -99,9 +99,11 @@ Read `<agent_path>/.env.example` and verify:
 
 Read `<agent_path>/README.md` and verify:
 
-- [ ] **Local tracing config** — `##### Tracing` subsection under Local `.env` config with example MLflow env vars
-- [ ] **OpenShift tracing config** — `##### Tracing` subsection under OpenShift `.env` config with variable explanations and behavioral notes (optional, graceful degradation, health check timeout)
-- [ ] **MLflow server start** — `uv run --extra tracing mlflow server --port 5000` step in the Local Usage section
+- [ ] A `### Tracing (optional)` section exists
+- [ ] **Local MLflow config** — example env vars for local development
+- [ ] **OpenShift MLflow config** — example env vars for OpenShift deployment with notes explaining each variable
+- [ ] **MLflow server start** — `uv run --extra tracing mlflow server --port 5000` command is documented
+- [ ] **Behavioral notes** — documents that tracing is optional, gracefully degrades if server is unreachable, and `MLFLOW_HEALTH_CHECK_TIMEOUT` controls wait time
 
 ### 7. `pyproject.toml` lists MLflow as optional
 
@@ -143,9 +145,11 @@ Read `<agent_path>/README.md` and verify:
 - Issues: <list or "None">
 
 ### README.md
-- Local tracing config: YES / NO
-- OpenShift tracing config: YES / NO
+- Tracing (optional) section exists: YES / NO
+- Local MLflow config: YES / NO
+- OpenShift MLflow config: YES / NO
 - MLflow server start step: YES / NO
+- Behavioral notes: YES / NO
 - Issues: <list or "None">
 
 ### pyproject.toml
