@@ -12,7 +12,7 @@
 
 ## Testing
 
-- [ ] `make test` passes for affected agent(s)
+- [ ] `make test` passes (run from the affected agent directory)
 - [ ] Manual testing performed (describe steps below)
 - [ ] No testing required (documentation/config change only)
 
