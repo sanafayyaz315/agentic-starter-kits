@@ -49,6 +49,7 @@ ollama: ## Install Ollama, start it, and pull models
 	  echo "Done. Run 'make llama-server' to start the Llama Stack server."
 
 llama-server: ## Install llama-stack and start Llama Stack server
+	@[ -d .venv ] || { echo "ERROR: .venv not found — run 'make env' first"; exit 1; }
 	@source .venv/bin/activate && set -a && source .env && set +a && \
 	  echo "==> Installing llama-stack dependencies..." && \
 	  uv sync --extra llama && \
@@ -59,6 +60,7 @@ llama-server: ## Install llama-stack and start Llama Stack server
 	  llama stack run ../../../run_llama_server.yaml
 
 run-app: ## Run agent locally with hot-reload
+	@[ -d .venv ] || { echo "ERROR: .venv not found — run 'make env' first"; exit 1; }
 	@source .venv/bin/activate && set -a && source .env && set +a && \
 	  if lsof -ti:$${PORT:-8000} >/dev/null 2>&1; then \
 	    echo "ERROR: Port $${PORT:-8000} is already in use." && \
@@ -69,6 +71,7 @@ run-app: ## Run agent locally with hot-reload
 	  uv run uvicorn main:app --host 127.0.0.1 --port $${PORT:-8000} --reload --reload-exclude .venv
 
 run-app-fresh: ## Kill existing process on port and run agent with hot-reload
+	@[ -d .venv ] || { echo "ERROR: .venv not found — run 'make env' first"; exit 1; }
 	@source .venv/bin/activate && set -a && source .env && set +a && \
 	  echo "==> Killing existing process on port $${PORT:-8000}..." && \
 	  lsof -ti:$${PORT:-8000} | xargs kill -9 2>/dev/null; true && \
