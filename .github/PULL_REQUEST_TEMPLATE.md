@@ -2,13 +2,9 @@
 
 <!-- Summarize your changes and the motivation behind them -->
 
-## Type of Change
+## Jira Ticket
 
-- [ ] Bug Fix
-- [ ] Feature
-- [ ] Breaking Change
-- [ ] Documentation
-- [ ] Refactor/Chore
+<!-- e.g. RHAIENG-123 -->
 
 ## Testing
 
@@ -31,7 +27,3 @@
 ## Related PRs
 
 <!-- Link any related pull requests, e.g. #42, #56 -->
-
-## Jira Ticket
-
-<!-- e.g. RHAIENG-123 -->
