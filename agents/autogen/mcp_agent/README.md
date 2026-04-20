@@ -151,7 +151,7 @@ Then start the MLflow server in a separate terminal:
 uv run --extra tracing mlflow server --port 5000
 ```
 
-When `MLFLOW_TRACKING_URI` is set, `make run` will automatically install the tracing dependency.
+When `MLFLOW_TRACKING_URI` is set, `make run-app` will automatically install the tracing dependency.
 
 #### Tracing with an OpenShift MLflow server
 
