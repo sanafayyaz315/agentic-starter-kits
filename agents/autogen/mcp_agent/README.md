@@ -18,7 +18,7 @@ dynamically (e.g. churn prediction, deployment), and answers user questions via 
 
 - Discovers and loads tools from an MCP server at startup
 - Uses `reflect_on_tool_use=True` so the LLM reasons about tool results before responding
-- Supports both streaming (SSE) and non-streaming responses
+- Supports both streaming (SSE) and non-streaming responses (streaming auto-adjusts when MLflow tracing is enabled; see [Tracing](#tracing) section)
 - Includes an interactive web playground with an MCP tools panel
 - Extends OpenAI streaming with `mcp.tool_usage` events and `tool_invocations` in JSON responses
 
@@ -107,6 +107,69 @@ DEPLOYMENT_TOKEN=your-model-serving-bearer-token
 
 - `DEPLOYMENT_URL` — URL of the ML model serving endpoint called by MCP tools at runtime
 - `DEPLOYMENT_TOKEN` — Bearer token for authenticating with the model serving endpoint
+
+### Tracing (optional)
+
+Tracing is optional. If MLflow tracing is required, enable it by uncommenting and setting the following environment variables in the `.env` file.
+
+#### Tracing with a local MLflow server
+
+```ini
+MLFLOW_TRACKING_URI="http://localhost:5000"
+MLFLOW_EXPERIMENT_NAME="autogen-mcp-agent"
+MLFLOW_HTTP_REQUEST_TIMEOUT=2
+MLFLOW_HTTP_REQUEST_MAX_RETRIES=0
+```
+
+Then start the MLflow server in a separate terminal:
+
+```bash
+# Start the MLflow server
+uv run --extra tracing mlflow server --port 5000
+```
+
+When `MLFLOW_TRACKING_URI` is set, `make run` will automatically install the tracing dependency.
+
+#### Tracing with an OpenShift MLflow server
+
+To enable tracing and logging with MLflow on your OpenShift cluster, add the following environment variables to your `.env` file:
+
+```ini
+MLFLOW_TRACKING_URI="https://<openshift-dashboard-url>/mlflow"
+MLFLOW_TRACKING_TOKEN="<your-openshift-token>"
+MLFLOW_EXPERIMENT_NAME="autogen-mcp-agent"
+MLFLOW_TRACKING_INSECURE_TLS="true"
+MLFLOW_WORKSPACE="default"
+```
+
+**Notes:**
+- `MLFLOW_TRACKING_URI` - URL of your MLflow server. For local development, use `http://localhost:5000`. If using MLflow on an OpenShift cluster, replace `<openshift-dashboard-url>` with your cluster's data science gateway URL.
+- `MLFLOW_TRACKING_TOKEN` - Required for OpenShift only. Your OpenShift authentication token, obtained from the OpenShift console.
+- `MLFLOW_EXPERIMENT_NAME` - A descriptive name for your experiment (e.g., "AutoGen MCP Demo")
+- `MLFLOW_TRACKING_INSECURE_TLS` - Required for OpenShift only. Set to `"true"` if your cluster does not use trusted certificates.
+- `MLFLOW_WORKSPACE` - Required for OpenShift only. Project name.
+
+- Tracing is optional; if you do not set `MLFLOW_TRACKING_URI`, the application will run without MLflow logging.
+
+- If `MLFLOW_TRACKING_URI` is set, the application will attempt to connect to the MLflow server at startup. If the server is unreachable, the application will log a warning and continue running without tracing.
+
+- You can control how long the application waits for the MLflow server by setting `MLFLOW_HEALTH_CHECK_TIMEOUT` (in seconds, default: `5`).
+
+#### Streaming and tracing
+
+`mlflow.autogen.autolog()` does not support AutoGen's streaming APIs (`run_stream`, `create_stream`) as of now. To handle this, streaming is **auto-detected**:
+
+- When `MLFLOW_TRACKING_URI` is **not set** → streaming is enabled (playground works)
+- When `MLFLOW_TRACKING_URI` is **set** → streaming is disabled (complete MLflow traces)
+
+You can always override this by setting `MODEL_CLIENT_STREAM` explicitly in your `.env`:
+
+```ini
+MODEL_CLIENT_STREAM=true   # force streaming on (playground works, traces incomplete)
+MODEL_CLIENT_STREAM=false  # force streaming off (complete traces, playground won't display responses)
+```
+
+When streaming is enabled, traces will be incomplete — LLM spans will be missing and remaining spans (TOOL) will be orphaned without a parent AGENT span. Once MLflow adds native support for AutoGen streaming, traces will work automatically without any code changes.
 
 ### Running the Agent
 

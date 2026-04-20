@@ -15,7 +15,7 @@ init: ## Copy .env.example to .env for configuration
 run: ## Run agent locally with hot-reload (port 8000)
 	@set -a && source .env && set +a && \
 	  MCP_SERVER_URL="$${MCP_SERVER_URL:-http://127.0.0.1:8080/sse}" \
-	  uv run uvicorn main:app --host 127.0.0.1 --port $${PORT:-8000} --reload --reload-exclude .venv
+	  uv run $${MLFLOW_TRACKING_URI:+--extra tracing} uvicorn main:app --host 127.0.0.1 --port $${PORT:-8000} --reload --reload-exclude .venv
 
 interact-mcp: ## Chat with MCP tools directly via LangGraph (no AutoGen agent)
 	@set -a && source .env && set +a && \
