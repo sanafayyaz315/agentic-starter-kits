@@ -30,20 +30,18 @@ LangGraph and LangChain.
 
 #### Initiating base
 
-Here you copy .env.example file into .env
+`make init` creates a `.env` file from `.env.example`. Set your environment variables in the `.env` file.
 
 ```bash
 cd agents/langgraph/react_agent
 make init
 ```
 
-Edit `.env` with your configuration, then:
-
-### Tracing (optional)
+#### Tracing (optional)
 
 Tracing is optional. If MLflow tracing is required, enable it by uncommenting and setting the following environment variables in the `.env` file.
 
-#### Tracing with a local MLflow server
+##### Tracing with a local MLflow server
 
 ```ini
 MLFLOW_TRACKING_URI="http://localhost:5000"
@@ -61,7 +59,7 @@ uv run --extra tracing mlflow server --port 5000
 
 When `MLFLOW_TRACKING_URI` is set, `make run-app` and `make run-cli` will automatically install the tracing dependency.
 
-#### Tracing with an OpenShift MLflow server
+##### Tracing with an OpenShift MLflow server
 
 To enable tracing and logging with MLflow on your OpenShift cluster, add the following environment variables to your `.env` file:
 
