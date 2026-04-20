@@ -40,6 +40,53 @@ make init
 
 Edit `.env` with your configuration, then:
 
+### Tracing (optional)
+
+Tracing is optional. If MLflow tracing is required, enable it by uncommenting and setting the following environment variables in the `.env` file.
+
+#### Tracing with a local MLflow server
+
+```ini
+MLFLOW_TRACKING_URI="http://localhost:5000"
+MLFLOW_EXPERIMENT_NAME="langgraph-agentic-rag"
+MLFLOW_HTTP_REQUEST_TIMEOUT=2
+MLFLOW_HTTP_REQUEST_MAX_RETRIES=0
+```
+
+Then start the MLflow server in a separate terminal:
+
+```bash
+# Start the MLflow server
+uv run --extra tracing mlflow server --port 5000
+```
+
+When `MLFLOW_TRACKING_URI` is set, `make run-app` and `make run-cli` will automatically install the tracing dependency.
+
+#### Tracing with an OpenShift MLflow server
+
+To enable tracing and logging with MLflow on your OpenShift cluster, add the following environment variables to your `.env` file:
+
+```ini
+MLFLOW_TRACKING_URI="https://<openshift-dashboard-url>/mlflow"
+MLFLOW_TRACKING_TOKEN="<your-openshift-token>"
+MLFLOW_EXPERIMENT_NAME="langgraph-agentic-rag"
+MLFLOW_TRACKING_INSECURE_TLS="true"
+MLFLOW_WORKSPACE="default"
+```
+
+**Notes:**
+- `MLFLOW_TRACKING_URI` - URL of your MLflow server. For local development, use `http://localhost:5000`. If using MLflow on an OpenShift cluster, replace `<openshift-dashboard-url>` with your cluster's data science gateway URL.
+- `MLFLOW_TRACKING_TOKEN` - Required for OpenShift only. Your OpenShift authentication token, obtained from the OpenShift console.
+- `MLFLOW_EXPERIMENT_NAME` - A descriptive name for your experiment (e.g., "LangGraph Agentic RAG Demo")
+- `MLFLOW_TRACKING_INSECURE_TLS` - Required for OpenShift only. Set to `"true"` if your cluster does not use trusted certificates.
+- `MLFLOW_WORKSPACE` - Required for OpenShift only. Project name.
+
+- Tracing is optional; if you do not set `MLFLOW_TRACKING_URI`, the application will run without MLflow logging.
+
+- If `MLFLOW_TRACKING_URI` is set, the application will attempt to connect to the MLflow server at startup. If the server is unreachable, the application will log a warning and continue running without tracing.
+
+- You can control how long the application waits for the MLflow server by setting `MLFLOW_HEALTH_CHECK_TIMEOUT` (in seconds, default: `5`).
+
 #### RAG Configuration
 
 In addition to the model configuration, this agent requires RAG-specific settings in your `.env` file:
