@@ -31,6 +31,11 @@ make dry-run    # preview Helm manifests
 - Source code in `src/<agent_name>/` within each agent directory
 - Keep agents self-contained -- never import from another agent's `src/`
 
+## Pull requests
+
+- When creating a PR, always read `.github/PULL_REQUEST_TEMPLATE.md` and use its contents as the PR body structure. Fill in each section appropriately. This applies whether using `gh pr create`, the GitHub web UI, or any other method.
+- Use [conventional commits](https://www.conventionalcommits.org/en/v1.0.0/) for PR titles (e.g., `feat:`, `fix:`, `chore:`)
+
 ## Workflow
 
 - `cd` into the agent directory first -- Makefiles use relative paths and read `agent.yaml` at runtime
