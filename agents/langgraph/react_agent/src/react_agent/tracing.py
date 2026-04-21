@@ -43,8 +43,7 @@ def check_mlflow_health(mlflow_tracking_uri: str, max_wait_time: int = 5, retry_
                 logger.warning(
                     f"MLflow returned status code {response.status_code} at {mlflow_url}\n"
                     f"  Status Code: {response.status_code}\n"
-                    f"  Reason: {response.reason}\n"
-                    f"  Response Body: {response.text[:500]}"
+                    f"  Reason: {response.reason}"
                 )
         except requests.exceptions.RequestException as e:
             logger.warning(f"Failed to connect to MLflow at {mlflow_url}: {e}")
@@ -69,6 +68,15 @@ def enable_tracing() -> None:
         logger.info("[Tracing] MLFLOW_TRACKING_URI not set. Tracing is disabled.")
         return
 
+    try:
+        import mlflow
+        import mlflow.langchain
+    except ModuleNotFoundError as e:
+        raise ModuleNotFoundError(
+            "MLFLOW_TRACKING_URI is set but mlflow is not installed. "
+            "Install it with: uv sync --extra tracing'"
+        ) from e
+
     # Check if server is reachable
     try:
         try:
@@ -77,7 +85,7 @@ def enable_tracing() -> None:
             health_check_timeout = 5
         check_mlflow_health(mlflow_tracking_uri=tracking_uri, max_wait_time=health_check_timeout)
         logger.info(f"[Tracing] MLflow server is reachable at {tracking_uri}")
-    except (RuntimeError, ModuleNotFoundError) as e:
+    except RuntimeError as e:
         logger.warning(
             f"[Tracing] MLflow server is unreachable at {tracking_uri}. "
             f"Tried connecting for {health_check_timeout}s. Continuing without tracing. Error: {e}"
@@ -86,9 +94,6 @@ def enable_tracing() -> None:
 
     # Server is reachable → enable tracing
     try:
-        import mlflow
-        import mlflow.langchain
-
         mlflow.set_tracking_uri(tracking_uri)
         experiment_name: str = getenv("MLFLOW_EXPERIMENT_NAME", "default-agent-experiment")
         mlflow.set_experiment(experiment_name)
@@ -97,10 +102,6 @@ def enable_tracing() -> None:
         mlflow.langchain.autolog()
 
         logger.info(f"[Tracing Enabled] MLflow -> {tracking_uri}, Experiment: {experiment_name}")
-    except ModuleNotFoundError:
-        logger.warning(
-            "[Tracing] MLflow not installed. Skipping tracing."
-        )
     except Exception as e:
         logger.warning(
             f"[Tracing] Failed to configure MLflow tracing at {tracking_uri}. "

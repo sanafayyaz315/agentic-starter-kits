@@ -43,8 +43,7 @@ def check_mlflow_health(mlflow_tracking_uri: str, max_wait_time: int = 5, retry_
                 logger.warning(
                     f"MLflow returned status code {response.status_code} at {mlflow_url}\n"
                     f"  Status Code: {response.status_code}\n"
-                    f"  Reason: {response.reason}\n"
-                    f"  Response Body: {response.text[:500]}"
+                    f"  Reason: {response.reason}"
                 )
         except requests.exceptions.RequestException as e:
             logger.warning(f"Failed to connect to MLflow at {mlflow_url}: {e}")
