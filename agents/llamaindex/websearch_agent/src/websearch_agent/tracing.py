@@ -74,7 +74,7 @@ def enable_tracing() -> None:
     except ModuleNotFoundError as e:
         raise ModuleNotFoundError(
             "MLFLOW_TRACKING_URI is set but mlflow is not installed. "
-            "Install it with: uv sync --extra tracing'"
+            "Install it with: uv sync --extra tracing"
         ) from e
 
     # Check if server is reachable
