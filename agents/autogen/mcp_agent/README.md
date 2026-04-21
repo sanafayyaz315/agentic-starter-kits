@@ -42,9 +42,19 @@ cd agents/autogen/mcp_agent
 make init        # creates .env from .env.example
 ```
 
-### Configuration
+### Install dependencies
 
-#### Pointing to a locally hosted model
+```bash
+make env
+```
+
+### Configure your model
+
+Edit `.env` to point the agent at an LLM. Choose **one** of the two options below.
+
+#### Option A: Local model (Ollama + Llama Stack)
+
+Set the following in `.env`:
 
 ```ini
 API_KEY=not-needed
@@ -52,9 +62,24 @@ BASE_URL=http://localhost:11434/v1
 MODEL_ID=llama3.1:8b
 ```
 
-See [Local Development](../../../docs/local-development.md) for Ollama + Llama Stack setup for local model serving.
+Then install Ollama and pull the model:
 
-#### Pointing to a remotely hosted model
+```bash
+make ollama                    # default model: llama3.1:8b
+make ollama MODEL=llama3.2:3b  # or specify a different model
+```
+
+Start the Llama Stack server (keep this terminal open):
+
+```bash
+make llama-server
+```
+
+> You should see output indicating the server started on `http://localhost:8321`.
+
+#### Option B: Remote model
+
+Set the following in `.env`:
 
 ```ini
 API_KEY=your-api-key-here
@@ -62,19 +87,17 @@ BASE_URL=https://your-model-endpoint.com/v1
 MODEL_ID=llama-3.1-8b-instruct
 ```
 
-**Notes:**
-
 - `API_KEY` - your API key or contact your cluster administrator
 - `BASE_URL` - should end with `/v1`
 - `MODEL_ID` - model identifier available on your endpoint
 
-#### MCP Configuration
+### MCP Configuration
 
 The agent can connect to any MCP server that supports SSE transport. By default it points to the bundled `mcp_automl_template` server(no configuration needed):
 
 | Environment | Default `MCP_SERVER_URL` | How it's set |
 |-------------|--------------------------|--------------|
-| Local (`make run`) | `http://127.0.0.1:8080/sse` | Makefile fallback |
+| Local (`make run-app`) | `http://127.0.0.1:8080/sse` | Makefile fallback |
 | OpenShift (`make deploy`) | `http://mcp-automl:8080/sse` | `values.yaml` (in-cluster service DNS) |
 
 To connect to an external MCP server, set `MCP_SERVER_URL` in your `.env`:
@@ -128,7 +151,7 @@ Then start the MLflow server in a separate terminal:
 uv run --extra tracing mlflow server --port 5000
 ```
 
-When `MLFLOW_TRACKING_URI` is set, `make run` will automatically install the tracing dependency.
+When `MLFLOW_TRACKING_URI` is set, `make run-app` will automatically install the tracing dependency.
 
 #### Tracing with an OpenShift MLflow server
 
@@ -188,7 +211,8 @@ This starts the MCP AutoML server on port 8080.
 #### Terminal 2 — Start agent
 
 ```bash
-make run
+make run-app           # fails if port is already in use
+make run-app-fresh     # kills existing process on port, then starts
 ```
 
 The agent starts on port 8000. Open [http://localhost:8000](http://localhost:8000) in your browser. A green dot in
