@@ -7,6 +7,8 @@
 name: "QG4: Agent Deployment Health Checks"
 
 on:
+  schedule:
+    - cron: "0 3 * * *" # 11 PM EDT / 10 PM EST
   workflow_dispatch:
 
 jobs:
