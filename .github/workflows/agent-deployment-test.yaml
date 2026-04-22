@@ -8,9 +8,6 @@ name: "QG4: Agent Deployment Health Checks"
 
 on:
   workflow_dispatch:
-  push: # TEMPORARY: remove before merging to main
-    branches:
-      - feat/RHAIENG-4028-ci-health-checks
 
 jobs:
   verify-cluster-connection:
