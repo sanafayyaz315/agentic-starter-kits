@@ -19,7 +19,7 @@ Before submitting, please read our [Code of Conduct](CODE_OF_CONDUCT.md). By par
 This repository uses [pre-commit](https://pre-commit.com/) hooks to enforce code quality checks before each commit. Set it up once after cloning:
 
 ```bash
-pip install pre-commit
+uv tool install pre-commit
 pre-commit install --install-hooks
 ```
 
@@ -42,7 +42,9 @@ Configuration is in [`ruff.toml`](ruff.toml) at the repo root.
 
 ## Commit message conventions
 
-This repository enforces the [Conventional Commits](https://www.conventionalcommits.org/) specification via a pre-commit hook. Commits that don't follow this format will be rejected.
+This repository enforces the [Conventional Commits](https://www.conventionalcommits.org/) specification via a pre-commit hook. Commits that don't follow this format will be blocked locally by the pre-commit hook.
+
+> **Tip:** To bypass the hook in rare cases (e.g., merge commits, emergency hotfixes): `git commit --no-verify`
 
 ### Format
 
